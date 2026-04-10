@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 게임 메인 화면: 그리드 + 컨트롤 + 숫자 패드
-struct ContentView: View {
+struct GameView: View {
 
     @State private var viewModel = GameViewModel()
 
@@ -25,5 +25,5 @@ struct ContentView: View {
 // MARK: - Preview
 
 #Preview {
-    ContentView()
+    GameView()
 }

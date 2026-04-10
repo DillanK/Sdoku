@@ -2,7 +2,7 @@
   "attachments" : [
 
   ],
-  "briefUpdatedAt" : "2026-04-10T04:52:17Z",
+  "briefUpdatedAt" : "2026-04-10T07:05:54Z",
   "briefVersion" : 0,
   "communicationLevel" : "technical",
   "completedFeatures" : [
@@ -91,6 +91,30 @@
         "Sdoku\/SdokuTests\/GameRecordRepositoryTests.swift",
         "Sdoku\/Sdoku\/HomeViewModel.swift",
         "Sdoku\/Sdoku\/Persistence.swift"
+      ],
+      "verificationPassed" : true
+    },
+    {
+      "archDecisions" : [
+
+      ],
+      "childFeatureIds" : [
+
+      ],
+      "completedAt" : "2026-04-10T07:05:54Z",
+      "id" : "0F0BC055-8B2D-420A-BEAF-1821C96DFBEE",
+      "knownIssues" : [
+
+      ],
+      "stageOutputs" : [
+
+      ],
+      "summary" : "독립적으로 구현된 홈·게임·퍼즐 생성 3개 모듈을 NavigationStack 기반 단일 사용자 플로우로 연결. HomeView 난이도 선택 → GameView 진입(실제 퍼즐 로드) → 완료 감지 → 기록 저장의 4개 단절 지점을 해소하여 완전한 플레이 사이클을 완성한다.",
+      "title" : "기능 연동",
+      "touchedFiles" : [
+        "Sdoku\/Sdoku\/Views\/GameView.swift",
+        "Sdoku\/Sdoku\/ViewModels\/GameViewModel.swift",
+        "Sdoku\/Sdoku\/HomeView.swift"
       ],
       "verificationPassed" : true
     }

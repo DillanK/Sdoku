@@ -14,7 +14,7 @@ struct SdokuApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            GameView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }

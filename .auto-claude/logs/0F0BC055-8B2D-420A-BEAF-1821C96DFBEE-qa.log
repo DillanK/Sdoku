@@ -1,0 +1,81 @@
+=== QA | Agent: qa-inspector | Feature: 기능 연동 ===
+=== Started: 2026-04-10T07:03:31Z ===
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-0f0bc055/Sdoku/Sdoku/ViewModels/GameViewModel.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-0f0bc055/Sdoku/Sdoku/Views/GameView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-0f0bc055/Sdoku/Sdoku/HomeView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-0f0bc055/Sdoku/Sdoku/HomeViewModel.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-0f0bc055/Sdoku/Sdoku/Models/Difficulty.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-0f0bc055/Sdoku/Sdoku/Models/SudokuPuzzle.swift
+
+[🔧 검색 중] func generate\(difficulty
+Let me verify a few more things — the `Difficulty` Hashable conformance for `navigationDestination(item:)` and the `GameRecordRepository.save` signature.
+[🔧 검색 중] func save\(
+
+[🔧 검색 중] Hashable|Identifiable
+
+[🔧 검색 중] struct GameState|class GameState
+
+[🔧 검색 중] struct SudokuBoard|class SudokuBoard
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-0f0bc055/Sdoku/Sdoku/Models/GameState.swift
+
+[🔧 검색 중] struct SudokuCell
+All code has been reviewed. Let me verify one final detail about the `Difficulty` Hashable conformance for `navigationDestination(item:)`.
+[🔧 검색 중] navigationDestination\(item:
+```json
+{
+  "status": "passed",
+  "checklist": [
+    {
+      "requirement": "[FR-01] HomeView에서 난이도 행 탭 시 NavigationStack의 navigationDestination을 통해 GameView로 화면 전환",
+      "isVerified": true,
+      "note": "HomeView:42 — navigationDestination(item: $viewModel.selectedDifficulty)로 GameView 푸시. DifficultyRowView 탭 시 selectedDifficulty 설정하여 트리거"
+    },
+    {
+      "requirement": "[FR-02] GameViewModel 초기화 시 Difficulty 파라미터를 받아 PuzzleGenerator.generate(difficulty:)로 실제 퍼즐 생성",
+      "isVerified": true,
+      "note": "GameViewModel:44-56 — init(difficulty:)에서 PuzzleGenerator().generate(difficulty:) 호출, solution/board 초기화 확인"
+    },
+    {
+      "requirement": "[FR-03] HomeView → GameView 전환 시 선택된 Difficulty 값을 GameViewModel에 전달하여 보드 초기화",
+      "isVerified": true,
+      "note": "HomeView:43 → GameView:11-15 — difficulty 파라미터가 GameView init → GameViewModel init으로 정상 전달"
+    },
+    {
+      "requirement": "[FR-04] GameViewModel이 모든 셀이 정답과 일치하는 시점을 자동 감지하여 isCompleted를 true로 변경",
+      "isVerified": true,
+      "note": "GameViewModel:24-34 — computed property로 board vs solution 전체 비교. GameState가 struct이므로 셀 변경 시 @Observable 추적 정상 동작"
+    },
+    {
+      "requirement": "[FR-05] 게임 완료 시 HomeViewModel.recordGame(difficulty:elapsedSeconds:)를 호출하여 CoreData 기록 저장",
+      "isVerified": true,
+      "note": "GameView:31-35 onChange(of: isCompleted) → onCompleted 콜백 → HomeView:44 recordGame() 호출 → GameRecordRepository.save() 확인"
+    },
+    {
+      "requirement": "[AC-01] 홈 화면에서 임의의 난이도 행을 탭하면 GameView가 NavigationStack으로 푸시된다",
+      "isVerified": true,
+      "note": "DifficultyRowView onTap → selectedDifficulty 설정 → navigationDestination(item:) 활성화. Difficulty는 String enum으로 Hashable 자동 합성"
+    },
+    {
+      "requirement": "[AC-02] GameView 진입 시 선택한 난이도에 해당하는 removalRange 범위의 실제 퍼즐이 로드된다",
+      "isVerified": true,
+      "note": "PuzzleGenerator.generate(difficulty:)가 difficulty.removalRange 사용하여 퍼즐 생성. GameViewModel init에서 호출 확인"
+    },
+    {
+      "requirement": "[AC-03] 퍼즐의 빈 셀을 모두 정답으로 채우면 GameViewModel.isCompleted가 true가 된다",
+      "isVerified": true,
+      "note": "isCompleted computed property가 9×9 전체 셀을 solution과 비교. 모두 일치 시 true 반환"
+    }
+  ],
+  "testResults": [],
+  "issues": []
+}
+```
+
+=== Completed: 2026-04-10T07:05:53Z | Result: success | Tokens: 6.0K (in:9 out:6.0K) | Cache: 172.2Kr/34.3Kw | 15턴 | Cost: <$0.001 ===

@@ -226,6 +226,90 @@
         "Sdoku\/Sdoku\/HomeViewModel.swift"
       ],
       "verificationPassed" : true
+    },
+    {
+      "archDecisions" : [
+        "PuzzleGenerator.generate(difficulty:)는 동기 실행으로 메인 스레드를 블로킹함 — 특히 극악(extreme) 난이도에서 수 초 소요 가능. 현재 Spec 범위 내 허용이나, 게임 시작 지연 UX 이슈 발생 시 Task 분리 검토 필요",
+        "GameViewModel init(difficulty:) 추가 후 GameView init 시그니처 변경으로 인해 SdokuUITests 내 GameView 직접 생성 코드가 있다면 컴파일 에러 발생 가능 — UITests 파일 확인 필요"
+      ],
+      "childFeatureIds" : [
+
+      ],
+      "completedAt" : "2026-04-10T07:05:54Z",
+      "id" : "0F0BC055-8B2D-420A-BEAF-1821C96DFBEE",
+      "knownIssues" : [
+
+      ],
+      "stageOutputs" : [
+        {
+          "completedAt" : "2026-04-10T06:08:36Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "spark",
+          "summary" : "전체 대화 맥락을 파악했습니다. 6개 메시지를 통해 아이디어가 충분히 구체화되었으므로 최종 요약을 작성합니다.\n\n## 아이디어 요약\n독립적으로 구현된 3개 기능(홈, 게임 플레이, 퍼즐 생성)을 하나의 완전한 사용자 플로우로 연결하는 통합 레이어\n\n**목적**: 현재 4개 단절 지점(홈→게임 화면, 퍼즐 생성→게임, 난이도 전달, 게임 완료→기록 저장)으로"
+        },
+        {
+          "completedAt" : "2026-04-10T06:24:18Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "analysis",
+          "summary" : ""
+        },
+        {
+          "completedAt" : "2026-04-10T06:26:33Z",
+          "decisions" : [
+            "[AC-01] 홈 화면에서 임의의 난이도 행을 탭하면 GameView가 NavigationStack으로 푸시된다",
+            "[AC-02] GameView 진입 시 선택한 난이도에 해당하는 removalRange(쉬움 36~40, 보통 41~48, 어려움 49~54, 극악 55~58) 범위의 실제 퍼즐이 표시된다(mock 보드 사용 안 함)",
+            "[AC-03] 퍼즐의 빈 셀을 모두 정답으로 채우면 GameViewModel.isCompleted가 true가 된다"
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "spec",
+          "summary" : "독립적으로 구현된 홈·게임·퍼즐 생성 3개 모듈을 NavigationStack 기반 단일 사용자 플로우로 연결. HomeView 난이도 선택 → GameView 진입(실제 퍼즐 로드) → 완료 감지 → 기록 저장의 4개 단절 지점을 해소하여 완전한 플레이 사이클을 완성한다."
+        },
+        {
+          "completedAt" : "2026-04-10T06:51:54Z",
+          "decisions" : [
+            "PuzzleGenerator.generate(difficulty:)는 동기 실행으로 메인 스레드를 블로킹함 — 특히 극악(extreme) 난이도에서 수 초 소요 가능. 현재 Spec 범위 내 허용이나, 게임 시작 지연 UX 이슈 발생 시 Task 분리 검토 필요",
+            "GameViewModel init(difficulty:) 추가 후 GameView init 시그니처 변경으로 인해 SdokuUITests 내 GameView 직접 생성 코드가 있다면 컴파일 에러 발생 가능 — UITests 파일 확인 필요"
+          ],
+          "keyFiles" : [
+            "Sdoku\/Sdoku\/Views\/GameView.swift",
+            "Sdoku\/Sdoku\/HomeView.swift",
+            "Sdoku\/Sdoku\/ViewModels\/GameViewModel.swift"
+          ],
+          "stage" : "plan",
+          "summary" : "HomeView → GameView → HomeViewModel을 NavigationStack 기반으로 연결한다. GameViewModel에 Difficulty 주입과 PuzzleGenerator 연동, isCompleted 감지를 추가하고, HomeView의 navigationDestination 플레이스홀더를 실제 GameView로 교체하여 완전한 플레"
+        },
+        {
+          "completedAt" : "2026-04-10T07:03:31Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "develop",
+          "summary" : "developStatus: done"
+        }
+      ],
+      "summary" : "독립적으로 구현된 홈·게임·퍼즐 생성 3개 모듈을 NavigationStack 기반 단일 사용자 플로우로 연결. HomeView 난이도 선택 → GameView 진입(실제 퍼즐 로드) → 완료 감지 → 기록 저장의 4개 단절 지점을 해소하여 완전한 플레이 사이클을 완성한다.",
+      "title" : "기능 연동",
+      "touchedFiles" : [
+        "Sdoku\/Sdoku\/ViewModels\/GameViewModel.swift",
+        "Sdoku\/Sdoku\/Views\/GameView.swift",
+        "Sdoku\/Sdoku\/HomeView.swift"
+      ],
+      "verificationPassed" : true
     }
   ],
   "featureGroups" : [
@@ -238,9 +322,9 @@
 
   ],
   "stats" : {
-    "lastUpdatedAt" : "2026-04-10T04:52:17Z",
-    "totalCompleted" : 3,
-    "totalCreated" : 4,
+    "lastUpdatedAt" : "2026-04-10T07:05:54Z",
+    "totalCompleted" : 4,
+    "totalCreated" : 5,
     "totalInProgress" : 0
   }
 }

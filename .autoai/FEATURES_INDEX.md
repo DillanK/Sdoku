@@ -1,13 +1,13 @@
 # AutoAI Features Index
 
 > 자동 생성됨. 수동 편집하지 마세요.
-> 마지막 갱신: 2026-04-10 14:08
+> 마지막 갱신: 2026-04-10 16:05
 
 ## 진행 중 (1)
 
 | ID | Feature | Stage | Status | Priority | Updated |
 |----|---------|-------|--------|----------|---------|
-| DC49968A | [Branch Master 머지 여부 확인](features/branch-master-머지-여부-확인.md) | Analysis | Review | - | 2026-04-10 |
+| 0F0BC055 | [기능 연동](features/기능-연동.md) | QA | Reviewing | Medium | 2026-04-10 |
 
 ## 완료 (4)
 

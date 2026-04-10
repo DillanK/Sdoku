@@ -33,4 +33,14 @@ enum Difficulty: String, CaseIterable, Codable {
         case .extreme: return 3
         }
     }
+
+    /// 난이도별 제거할 셀 수 범위 (퍼즐 생성 시 사용)
+    var removalRange: ClosedRange<Int> {
+        switch self {
+        case .easy:    return 36...40
+        case .normal:  return 41...48
+        case .hard:    return 49...54
+        case .extreme: return 55...58
+        }
+    }
 }

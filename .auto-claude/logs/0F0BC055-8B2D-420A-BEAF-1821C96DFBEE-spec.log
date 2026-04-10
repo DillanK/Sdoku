@@ -1,0 +1,82 @@
+=== Spec | Agent: spec-drafter | Feature: 기능 연동 ===
+=== Started: 2026-04-10T06:24:18Z ===
+
+[🔧 검색 중] Sdoku/Sdoku/**/*.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ViewModels/GameViewModel.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/GameView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/HomeView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/HomeViewModel.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Difficulty.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Services/PuzzleGenerator.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Models/SudokuBoard.swift
+
+
+--- 자동 재시도 #1: 프로세스 에러 ---
+
+[🔧 에이전트 실행] Explore the Sdoku iOS project at /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku. List all Swift files and their key contents (classes, structs, functions). Focus on: HomeView, GameView, GameViewModel, DifficultySelectView, PuzzleGenerator, ContentView, and any CoreData related files. Show the actual code content for each file found.
+
+[🔧 검색 중] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/**/*.swift
+
+[🔧 명령 실행] find /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku -type f -name "*.swift" | head -50
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/HomeView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/GameView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ViewModels/GameViewModel.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ContentView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Difficulty.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Services/PuzzleGenerator.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Persistence.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/HomeViewModel.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Models/GameState.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Models/SudokuBoard.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Models/SudokuCell.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Models/SudokuPuzzle.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/GameRecordRepository.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Services/GridGenerator.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Services/UniqueSolutionValidator.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/SdokuApp.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/GameControlsView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/NumberPadView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+
+[🔧 명령 실행] find /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku -name "*.xcdatamodeld" -o -name "*.xcdatamodel"
+
+[🔧 명령 실행] find /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku -name "*.swift" | xargs grep -l "class GameRecord\|struct GameRecord" | head -5
+
+[🔧 명령 실행] find /Users/hyunjin/Developer/Git/Sdoku -type f \( -name "*GameRecord*" -o -name "*.xcdatamodel" \)
+
+[🔧 명령 실행] ls -la /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Sdoku.xcdatamodeld/
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Sdoku.xcdatamodeld/Sdoku.xcdatamodel/contents
+```json
+{"summary":"독립적으로 구현된 홈·게임·퍼즐 생성 3개 모듈을 NavigationStack 기반 단일 사용자 플로우로 연결. HomeView 난이도 선택 → GameView 진입(실제 퍼즐 로드) → 완료 감지 → 기록 저장의 4개 단절 지점을 해소하여 완전한 플레이 사이클을 완성한다.","functionalRequirements":["[FR-01] HomeView에서 난이도 행 탭 시 NavigationStack의 navigationDestination을 통해 GameView로 화면 전환","[FR-02] GameViewModel 초기화 시 Difficulty 파라미터를 받아 PuzzleGenerator.generate(difficulty:)로 실제 퍼즐을 생성(SudokuBoard.mock() 제거)","[FR-03] HomeView → GameView 전환 시 선택된 Difficulty 값을 GameViewModel에 전달하여 보드 초기화","[FR-04] GameViewModel이 모든 셀이 정답과 일치하는 시점을 자동 감지하여 isCompleted Bool 상태를 true로 변경","[FR-05] 게임 완료(isCompleted = true) 시 HomeViewModel.recordGame(difficulty:elapsedSeconds:)를 호출하여 CoreData에 기록 저장","[FR-06] GameView에서 홈으로 돌아갈 때 HomeViewModel.refresh()를 호출하여 통계 데이터를 갱신"],"nonFunctionalRequirements":["[NFR-01] 퍼즐 생성은 메인 스레드를 차단하지 않아야 하며, Task 비동기로 처리하거나 생성 완료 전까지 기존 빈 보드를 표시","[NFR-02] 기존 4개 파일(HomeView, HomeViewModel, GameView, GameViewModel) 수정만으로 구현하며 신규 뷰·서비스 파일 추가 금지","[NFR-03] GameViewModel의 공개 인터페이스 변경 시 기존 Preview 코드와의 호환성 유지(Difficulty 기본값 또는 Preview 전용 init 제공)","[NFR-04] CoreData 저장 실패 시 앱 크래시 없이 조용히 처리(에러 로그만)"],"acceptanceCriteria":["[AC-01] 홈 화면에서 임의의 난이도 행을 탭하면 GameView가 NavigationStack으로 푸시된다","[AC-02] GameView 진입 시 선택한 난이도에 해당하는 removalRange(쉬움 36~40, 보통 41~48, 어려움 49~54, 극악 55~58) 범위의 실제 퍼즐이 표시된다(mock 보드 사용 안 함)","[AC-03] 퍼즐의 빈 셀을 모두 정답으로 채우면 GameViewModel.isCompleted가 true가 된다","[AC-04] isCompleted가 true가 되는 시점에 해당 난이도의 GameRecord가 CoreData에 저장된다(isCompleted=true, difficulty 올바름)","[AC-05] 게임 완료 후 홈 화면으로 돌아가면 해당 난이도의 completedCount가 1 증가되어 표시된다","[AC-06] 충돌(isConflict=true)이 있는 셀이 존재하는 상태에서는 isCompleted가 true가 되지 않는다"],"impactScope":["Sdoku/Sdoku/HomeView.swift — navigationDestination 추가, DifficultyRowView 탭 핸들러 연결","Sdoku/Sdoku/HomeViewModel.swift — selectedDifficulty 트리거 활성화, refresh() 호출 시점 확인","Sdoku/Sdoku/Views/GameView.swift — GameViewModel(difficulty:) 초기화 방식 변경, 완료 감지 후 HomeViewModel 콜백 연결","Sdoku/Sdoku/ViewModels/GameViewModel.swift — Difficulty 파라미터 추가, PuzzleGenerator 사용, isCompleted 감지 로직 추가"],"constraints":["신규 뷰 파일 또는 서비스 파일 추가 금지 — 기존 4개 파일 수정만 허용","의존성 수정 순서 준수: GameViewModel → GameView → HomeViewModel → HomeView","타이머, 게임 완료 축하 화면(모달/풀스크린), 로딩 인디케이터는 Phase 2로 미룸","GameViewModel에서 HomeViewModel을 직접 import하지 않고 콜백(클로저) 또는 onDisappear 시점 활용으로 결합도 최소화"],"outOfScope":["게임 진행 중 경과 시간 타이머 표시","게임 완료 시 축하 애니메이션 또는 전용 완료 화면","퍼즐 생성 중 로딩 스피너/인디케이터","게임 일시정지 및 재개 기능","힌트 기능","난이도별 최고 기록 갱신 알림"]}
+```
+
+=== Completed: 2026-04-10T06:26:33Z | Result: success | Tokens: 3.0K (in:4 out:3.0K) | Cache: 36.0Kr/9.5Kw | 2턴 | Cost: <$0.001 ===
