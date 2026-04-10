@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// 게임 컨트롤 버튼 모음: Pencil Mark 토글 + Undo
 struct GameControlsView: View {

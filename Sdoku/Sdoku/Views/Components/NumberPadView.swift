@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// 숫자 입력 패드: 1~9 숫자 버튼 + 지우기(X) 버튼 (3열 그리드)
 struct NumberPadView: View {
