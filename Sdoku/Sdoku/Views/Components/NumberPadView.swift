@@ -22,11 +22,15 @@ struct NumberPadView: View {
                     viewModel.inputNumber(number)
                 } label: {
                     Text("\(number)")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: 26, weight: .semibold))
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                        .frame(height: 56)
+                        .background(Color(.tertiarySystemFill))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(.separator), lineWidth: 0.5)
+                        )
                 }
                 .buttonStyle(.plain)
             }
@@ -38,9 +42,13 @@ struct NumberPadView: View {
                 Image(systemName: "delete.left")
                     .font(.system(size: 22))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
+                    .frame(height: 56)
+                    .background(Color(.tertiarySystemFill))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(.separator), lineWidth: 0.5)
+                    )
             }
             .buttonStyle(.plain)
         }

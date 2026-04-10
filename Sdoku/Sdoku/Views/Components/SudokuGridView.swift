@@ -21,7 +21,8 @@ struct SudokuGridView: View {
                                 SudokuCellView(
                                     cell: viewModel.board.cells[row][col],
                                     isSelected: viewModel.selectedRow == row && viewModel.selectedCol == col,
-                                    isRelated: isRelated(row: row, col: col)
+                                    isRelated: isRelated(row: row, col: col),
+                                    isSameNumber: isSameNumber(row: row, col: col)
                                 )
                                 .frame(width: cellSize, height: cellSize)
                                 .onTapGesture {
@@ -38,6 +39,19 @@ struct SudokuGridView: View {
             .frame(width: gridSize, height: gridSize)
         }
         .aspectRatio(1, contentMode: .fit)
+    }
+
+    // MARK: - 동일 숫자 판별
+
+    /// 선택된 셀과 동일한 숫자인지 확인 (선택 셀 자체는 false)
+    private func isSameNumber(row: Int, col: Int) -> Bool {
+        guard let selRow = viewModel.selectedRow,
+              let selCol = viewModel.selectedCol else { return false }
+        // 선택 셀 자체는 isSelected로 처리
+        if row == selRow && col == selCol { return false }
+        let selectedValue = viewModel.board.cells[selRow][selCol].value
+        guard selectedValue != 0 else { return false }
+        return viewModel.board.cells[row][col].value == selectedValue
     }
 
     // MARK: - 연관 셀 판별
