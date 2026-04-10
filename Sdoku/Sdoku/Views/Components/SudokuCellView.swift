@@ -5,7 +5,8 @@ struct SudokuCellView: View {
 
     let cell: SudokuCell
     let isSelected: Bool
-    let isRelated: Bool  // 선택 셀과 같은 행/열/박스
+    let isRelated: Bool       // 선택 셀과 같은 행/열/박스
+    let isSameNumber: Bool    // 선택 셀과 동일한 숫자
 
     var body: some View {
         ZStack {
@@ -23,13 +24,19 @@ struct SudokuCellView: View {
             }
         }
         .aspectRatio(1, contentMode: .fit)
+        // 빈 셀(Color.clear)도 hit-testing 영역 확보
+        .contentShape(Rectangle())
     }
 
     // MARK: - 색상 계산
 
     private var backgroundColor: Color {
         if isSelected {
-            return Color.blue.opacity(0.35)
+            // Sudoku.com 스타일 선명한 파란색
+            return Color(red: 0.18, green: 0.45, blue: 0.85).opacity(0.50)
+        } else if isSameNumber {
+            // 선택 셀과 동일 숫자: 연한 파란색
+            return Color.blue.opacity(0.18)
         } else if cell.isConflict {
             return Color.red.opacity(0.15)
         } else if isRelated {
@@ -86,27 +93,45 @@ private struct NoteGridView: View {
         SudokuCellView(
             cell: SudokuCell(value: 5, isFixed: true),
             isSelected: false,
-            isRelated: false
+            isRelated: false,
+            isSameNumber: false
         )
         // 선택된 셀
         SudokuCellView(
             cell: SudokuCell(value: 3, isFixed: false),
             isSelected: true,
-            isRelated: false
+            isRelated: false,
+            isSameNumber: false
+        )
+        // 동일 숫자 셀
+        SudokuCellView(
+            cell: SudokuCell(value: 3, isFixed: true),
+            isSelected: false,
+            isRelated: false,
+            isSameNumber: true
         )
         // 충돌 셀
         SudokuCellView(
             cell: SudokuCell(value: 3, isFixed: false, isConflict: true),
             isSelected: false,
-            isRelated: false
+            isRelated: false,
+            isSameNumber: false
         )
         // 메모 셀
         SudokuCellView(
             cell: SudokuCell(value: 0, isFixed: false, notes: [1, 3, 5, 7, 9]),
             isSelected: false,
-            isRelated: true
+            isRelated: true,
+            isSameNumber: false
+        )
+        // 빈 셀 (hit-test 버그 수정 확인용)
+        SudokuCellView(
+            cell: SudokuCell(value: 0, isFixed: false),
+            isSelected: false,
+            isRelated: false,
+            isSameNumber: false
         )
     }
-    .frame(width: 200, height: 50)
+    .frame(width: 240, height: 50)
     .border(Color.gray)
 }
