@@ -1,0 +1,246 @@
+{
+  "completedFeatures" : [
+    {
+      "archDecisions" : [
+        "퍼즐 생성 엔진 Feature와 SudokuBoard 모델 인터페이스 불일치 가능성 — 생성 엔진 완료 후 통합 시 mock 보드를 실제 보드로 교체하는 작업 필요",
+        "iOS 17 미만 타겟 시 @Observable 매크로 미지원 — 프로젝트 최소 타겟 iOS 17 이상 확인 필요",
+        "CoreData managed object context가 GameView 계층에도 환경값으로 전달되어야 하며, ContentView 수정 시 기존 environment 연결 유지 필요"
+      ],
+      "childFeatureIds" : [
+
+      ],
+      "completedAt" : "2026-04-09T08:48:23Z",
+      "id" : "42CD1342-786B-4601-A678-B0BA90B62182",
+      "knownIssues" : [
+
+      ],
+      "parentFeatureId" : "5891ECF8-9129-4576-A31A-C342380A43B4",
+      "stageOutputs" : [
+        {
+          "completedAt" : "2026-04-09T07:47:23Z",
+          "decisions" : [
+            "9x9 그리드가 정상적으로 렌더링되고 3x3 박스 구분선이 명확히 보인다",
+            "고정 셀 탭 시 숫자 패드가 비활성화되거나 입력이 무시된다",
+            "메모 모드 토글 후 숫자 입력 시 해당 셀에 작은 숫자(메모)로 표시된다"
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "spec",
+          "summary" : "9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 스도쿠 게임 플레이 핵심 화면 구현"
+        },
+        {
+          "completedAt" : "2026-04-09T07:54:41Z",
+          "decisions" : [
+            "퍼즐 생성 엔진 Feature와 SudokuBoard 모델 인터페이스 불일치 가능성 — 생성 엔진 완료 후 통합 시 mock 보드를 실제 보드로 교체하는 작업 필요",
+            "iOS 17 미만 타겟 시 @Observable 매크로 미지원 — 프로젝트 최소 타겟 iOS 17 이상 확인 필요",
+            "CoreData managed object context가 GameView 계층에도 환경값으로 전달되어야 하며, ContentView 수정 시 기존 environment 연결 유지 필요"
+          ],
+          "keyFiles" : [
+            "Sdoku\/Sdoku\/Models\/SudokuBoard.swift",
+            "Sdoku\/Sdoku\/Views\/Components\/GameControlsView.swift",
+            "Sdoku\/Sdoku\/Views\/Components\/SudokuGridView.swift",
+            "Sdoku\/Sdoku\/Views\/Components\/NumberPadView.swift",
+            "Sdoku\/Sdoku\/ContentView.swift",
+            "Sdoku\/Sdoku\/Views\/Components\/SudokuCellView.swift",
+            "Sdoku\/Sdoku\/Models\/GameState.swift",
+            "Sdoku\/Sdoku\/Models\/SudokuCell.swift",
+            "Sdoku\/Sdoku\/Views\/GameView.swift",
+            "Sdoku\/Sdoku\/ViewModels\/GameViewModel.swift"
+          ],
+          "stage" : "plan",
+          "summary" : "9x9 스도쿠 게임 플레이 화면 구현 — 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, Undo 스택, 실시간 충돌 감지를 포함하는 핵심 게임 화면"
+        },
+        {
+          "completedAt" : "2026-04-09T08:46:02Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "develop",
+          "summary" : "developStatus: done"
+        }
+      ],
+      "summary" : "9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 스도쿠 게임 플레이 핵심 화면 구현",
+      "title" : "게임 플레이 화면 및 상태 관리",
+      "touchedFiles" : [
+        "Sdoku\/Sdoku\/ViewModels\/GameViewModel.swift",
+        "Sdoku\/Sdoku\/Models\/GameState.swift",
+        "Sdoku\/Sdoku\/Views\/Components\/SudokuCellView.swift",
+        "Sdoku\/Sdoku\/Views\/Components\/SudokuGridView.swift",
+        "Sdoku\/Sdoku\/Views\/Components\/GameControlsView.swift",
+        "Sdoku\/Sdoku\/ViewModels\/GameViewModel.swift (신규)",
+        "Sdoku\/Sdoku\/Models\/GameState.swift (신규)",
+        "Sdoku\/Sdoku\/Views\/Components\/SudokuCellView.swift (신규)",
+        "Sdoku\/Sdoku\/Views\/Components\/SudokuGridView.swift (신규)",
+        "Sdoku\/Sdoku\/Models\/SudokuBoard.swift (신규)"
+      ],
+      "verificationPassed" : true
+    },
+    {
+      "archDecisions" : [
+        "유일해 검증 성능 — 극악 난이도(55~58셀 제거)에서 유일해를 만족하는 셀 조합을 찾기 어려워 생성 시간이 길어질 수 있다. countSolutions에서 해 2개 발견 즉시 중단하는 조기 종료 로직이 필수이며, 최대 시도 횟수(예: 1000회) 초과 시 그리드 재생성으로 폴백하는 안전장치가 필요하다.",
+        "백트래킹 재귀 깊이 — Swift 기본 스택 크기 제한 내에서 81칸 백트래킹이 완료되는지 확인 필요. 대부분 문제없지만 최악 케이스에서 스택 오버플로우 가능성이 있으므로 iterative 방식 전환을 염두에 두어야 한다.",
+        "극악 난이도 제거 수 상한 미확정 — Spec에서 제거 수 상한이 잘린 상태(55~5...). 60개 이상 제거 시 유일해 생성 실패 빈도가 급증하므로 58을 실용적 상한으로 설정하고, 추후 조정 가능하도록 Difficulty enum에 범위를 캡슐화한다."
+      ],
+      "childFeatureIds" : [
+
+      ],
+      "completedAt" : "2026-04-09T08:48:55Z",
+      "id" : "5ED14057-C1CB-4372-B1CC-4A9D4E51A4A8",
+      "knownIssues" : [
+
+      ],
+      "parentFeatureId" : "5891ECF8-9129-4576-A31A-C342380A43B4",
+      "stageOutputs" : [
+        {
+          "completedAt" : "2026-04-09T07:47:27Z",
+          "decisions" : [
+            "생성된 완성 그리드는 9×9 모든 행, 열, 3×3 박스에 1~9가 중복 없이 포함되어야 한다",
+            "난이도별 제거 셀 수 범위 내에서 퍼즐이 생성되고, 반환된 givens 개수가 해당 범위를 만족해야 한다",
+            "유일해 검증을 통과한 퍼즐은 정확히 하나의 완성 해답만 존재해야 한다"
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "spec",
+          "summary" : "백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 Swift 로직 모듈. UI 의존성 없이 독립적으로 테스트 가능한 스도쿠 퍼즐 생성 엔진."
+        },
+        {
+          "completedAt" : "2026-04-09T07:55:18Z",
+          "decisions" : [
+            "유일해 검증 성능 — 극악 난이도(55~58셀 제거)에서 유일해를 만족하는 셀 조합을 찾기 어려워 생성 시간이 길어질 수 있다. countSolutions에서 해 2개 발견 즉시 중단하는 조기 종료 로직이 필수이며, 최대 시도 횟수(예: 1000회) 초과 시 그리드 재생성으로 폴백하는 안전장치가 필요하다.",
+            "백트래킹 재귀 깊이 — Swift 기본 스택 크기 제한 내에서 81칸 백트래킹이 완료되는지 확인 필요. 대부분 문제없지만 최악 케이스에서 스택 오버플로우 가능성이 있으므로 iterative 방식 전환을 염두에 두어야 한다.",
+            "극악 난이도 제거 수 상한 미확정 — Spec에서 제거 수 상한이 잘린 상태(55~5...). 60개 이상 제거 시 유일해 생성 실패 빈도가 급증하므로 58을 실용적 상한으로 설정하고, 추후 조정 가능하도록 Difficulty enum에 범위를 캡슐화한다."
+          ],
+          "keyFiles" : [
+            "Sdoku\/Sdoku\/Models\/SudokuPuzzle.swift",
+            "Sdoku\/SdokuTests\/PuzzleGeneratorTests.swift",
+            "Sdoku\/Sdoku\/Models\/Difficulty.swift",
+            "Sdoku\/Sdoku\/Services\/UniqueSolutionValidator.swift",
+            "Sdoku\/Sdoku\/Services\/GridGenerator.swift",
+            "Sdoku\/Sdoku\/Services\/PuzzleGenerator.swift"
+          ],
+          "stage" : "plan",
+          "summary" : "백트래킹 기반 스도쿠 퍼즐 생성 엔진 구현. Difficulty enum 및 SudokuPuzzle 모델 정의 → 완성 그리드 생성기(GridGenerator) → 유일해 검증기(UniqueSolutionValidator) → 공개 API(PuzzleGenerator) → 단위 테스트 순으로 빌드 안전성을 유지하며 점진적으로 구현."
+        },
+        {
+          "completedAt" : "2026-04-09T08:47:19Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "develop",
+          "summary" : "developStatus: done"
+        }
+      ],
+      "summary" : "백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 Swift 로직 모듈. UI 의존성 없이 독립적으로 테스트 가능한 스도쿠 퍼즐 생성 엔진.",
+      "title" : "스도쿠 퍼즐 생성 엔진",
+      "touchedFiles" : [
+        "Sdoku\/Sdoku\/Services\/GridGenerator.swift",
+        "Sdoku\/Sdoku\/Services\/PuzzleGenerator.swift",
+        "Sdoku\/Sdoku\/Models\/Difficulty.swift",
+        "Sdoku\/Sdoku\/Models\/SudokuPuzzle.swift",
+        "Sdoku\/Sdoku\/Services\/UniqueSolutionValidator.swift",
+        "Sdoku\/SdokuTests\/PuzzleGeneratorTests.swift"
+      ],
+      "verificationPassed" : true
+    },
+    {
+      "archDecisions" : [
+        "CoreData Item 엔티티 제거 및 GameRecord 교체 시 Xcode 자동 생성 NSManagedObject 서브클래스 재생성 필요 — 빌드 캐시 클린 권장",
+        "@Observable macro는 iOS 17+ 필수 — 프로젝트 최소 배포 타겟 확인 필요",
+        "게임 플레이 화면(GamePlayView)이 미구현 상태로 HomeView의 NavigationStack destination이 placeholder — 게임 플레이 Feature 완료 후 연결 필요"
+      ],
+      "childFeatureIds" : [
+
+      ],
+      "completedAt" : "2026-04-10T04:52:17Z",
+      "id" : "2467F601-1992-4FD4-A748-437CDCA89FC2",
+      "knownIssues" : [
+
+      ],
+      "parentFeatureId" : "5891ECF8-9129-4576-A31A-C342380A43B4",
+      "stageOutputs" : [
+        {
+          "completedAt" : "2026-04-09T07:47:10Z",
+          "decisions" : [
+            "홈 화면 진입 시 4개의 난이도 버튼이 모두 표시된다",
+            "각 난이도 버튼 탭 시 해당 난이도의 게임 플레이 화면으로 이동한다",
+            "게임 완료 후 홈 화면으로 돌아오면 해당 난이도의 완료 횟수가 1 증가해 있다"
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "spec",
+          "summary" : "난이도 선택 UI, CoreData 기반 게임 기록 저장, 홈 화면 통계 요약을 포함한 Sdoku 앱의 진입점 화면 및 데이터 영속성 레이어"
+        },
+        {
+          "completedAt" : "2026-04-09T08:02:24Z",
+          "decisions" : [
+            "CoreData Item 엔티티 제거 및 GameRecord 교체 시 Xcode 자동 생성 NSManagedObject 서브클래스 재생성 필요 — 빌드 캐시 클린 권장",
+            "@Observable macro는 iOS 17+ 필수 — 프로젝트 최소 배포 타겟 확인 필요",
+            "게임 플레이 화면(GamePlayView)이 미구현 상태로 HomeView의 NavigationStack destination이 placeholder — 게임 플레이 Feature 완료 후 연결 필요"
+          ],
+          "keyFiles" : [
+            "Sdoku\/SdokuTests\/GameRecordRepositoryTests.swift",
+            "Sdoku\/Sdoku\/GameRecordRepository.swift",
+            "Sdoku\/Sdoku\/ContentView.swift",
+            "Sdoku\/Sdoku\/Persistence.swift",
+            "Sdoku\/Sdoku\/HomeView.swift",
+            "Sdoku\/Sdoku\/Difficulty.swift",
+            "Sdoku\/Sdoku\/HomeViewModel.swift",
+            "Sdoku\/Sdoku\/SdokuApp.swift",
+            "Sdoku\/Sdoku\/Sdoku.xcdatamodeld\/Sdoku.xcdatamodel\/contents"
+          ],
+          "stage" : "plan",
+          "summary" : "홈 화면(HomeView) 구현 및 CoreData 기반 게임 기록 저장 레이어 구축. Difficulty enum 공유 타입 정의, GameRecord CoreData 엔티티 추가(기존 Item 엔티티 교체), GameRecordRepository CRUD 서비스, HomeViewModel 통계 상태 관리, HomeView 난이도 선택 UI 및 통계 표시"
+        },
+        {
+          "completedAt" : "2026-04-10T02:32:26Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "develop",
+          "summary" : "developStatus: done"
+        }
+      ],
+      "summary" : "난이도 선택 UI, CoreData 기반 게임 기록 저장, 홈 화면 통계 요약을 포함한 Sdoku 앱의 진입점 화면 및 데이터 영속성 레이어",
+      "title" : "홈 화면 및 게임 기록 저장",
+      "touchedFiles" : [
+        "Sdoku\/Sdoku\/HomeView.swift",
+        "Sdoku\/Sdoku\/SdokuApp.swift",
+        "Sdoku\/Sdoku\/ContentView.swift",
+        "Sdoku\/SdokuTests\/GameRecordRepositoryTests.swift",
+        "Sdoku\/Sdoku\/Persistence.swift",
+        "Sdoku\/Sdoku\/Sdoku.xcdatamodeld\/Sdoku.xcdatamodel\/contents",
+        "Sdoku\/Sdoku\/Difficulty.swift",
+        "Sdoku\/Sdoku\/GameRecordRepository.swift",
+        "Sdoku\/Sdoku\/HomeViewModel.swift"
+      ],
+      "verificationPassed" : true
+    }
+  ],
+  "featureGroups" : [
+
+  ],
+  "inProgress" : [
+
+  ],
+  "qualityPatterns" : [
+
+  ],
+  "stats" : {
+    "lastUpdatedAt" : "2026-04-10T04:52:17Z",
+    "totalCompleted" : 3,
+    "totalCreated" : 4,
+    "totalInProgress" : 0
+  }
+}

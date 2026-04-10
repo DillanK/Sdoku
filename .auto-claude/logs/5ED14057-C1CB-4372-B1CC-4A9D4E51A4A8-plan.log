@@ -1,0 +1,30 @@
+=== Plan | Agent: plan-strategist | Feature: 스도쿠 퍼즐 생성 엔진 ===
+=== Started: 2026-04-09T07:47:27Z ===
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/.auto-claude/codebase-digest.md
+
+[🔧 검색 중] Sdoku/Sdoku/**/*.swift
+
+[🔧 검색 중] Sdoku/SdokuTests/**/*.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/SdokuApp.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/SdokuTests/SdokuTests.swift
+
+
+=== 비정상 종료 (앱 강제종료) — 2026-04-09T07:48:26Z ===
+
+
+════════════════════════════════════════
+
+=== Plan | Agent: plan-strategist | Feature: 스도쿠 퍼즐 생성 엔진 ===
+=== Started: 2026-04-09T07:53:42Z ===
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/.auto-claude/codebase-digest.md
+
+[🔧 검색 중] Sdoku/Sdoku/**/*.swift
+```json
+{"summary":"백트래킹 기반 스도쿠 퍼즐 생성 엔진 구현. Difficulty enum 및 SudokuPuzzle 모델 정의 → 완성 그리드 생성기(GridGenerator) → 유일해 검증기(UniqueSolutionValidator) → 공개 API(PuzzleGenerator) → 단위 테스트 순으로 빌드 안전성을 유지하며 점진적으로 구현.","estimatedDuration":"2h 30m","subtasks":[{"title":"데이터 모델 정의 (Difficulty, SudokuPuzzle)","description":"Difficulty enum(easy/medium/hard/extreme)을 정의하고, 각 case가 제거할 셀 수 범위(ClosedRange<Int>)를 computed property로 반환하도록 한다. SudokuPuzzle struct는 puzzle: [[Int]](0=빈 셀), solution: [[Int]](완성 정답), difficulty: Difficulty, givens: Int 필드를 포함한다.","files":["Sdoku/Sdoku/Models/Difficulty.swift","Sdoku/Sdoku/Models/SudokuPuzzle.swift"],"agentType":"backend","estimatedMinutes":15,"order":0,"dependsOn":[],"complexity":"simple"},{"title":"GridGenerator — 백트래킹 완성 그리드 생성기","description":"백트래킹 알고리즘으로 유효한 9×9 완성 스도쿠 그리드를 생성하는 내부 모듈. 행·열·박스 유효성 검사 헬퍼 포함. 매 호출마다 다른 퍼즐이 나오도록 후보 숫자(1~9)를 랜덤 셔플 후 시도한다. generateCompleteGrid() -> [[Int]] 단일 진입점으로 설계.","files":["Sdoku/Sdoku/Services/GridGenerator.swift"],"agentType":"backend","estimatedMinutes":40,"order":1,"dependsOn":[0],"complexity":"complex"},{"title":"UniqueSolutionValidator — 유일해 검증기","description":"셀 제거 후 퍼즐에 정확히 하나의 해답만 존재하는지 검증하는 내부 모듈. countSolutions(_ grid: [[Int]], limit: Int) -> Int 함수로 해의 수를 최대 limit개까지 세고, 2개 발견 즉시 탐색을 중단(조기 종료)한다. isUnique(_ grid: [[Int]]) -> Bool 공개 헬퍼 제공.","files":["Sdoku/Sdoku/Services/UniqueSolutionValidator.swift"],"agentType":"backend","estimatedMinutes":30,"order":2,"dependsOn":[0],"complexity":"normal"},{"title":"PuzzleGenerator — 공개 API 및 난이도별 셀 제거 로직","description":"GridGenerator로 완성 그리드를 생성하고, 난이도에 따른 범위(쉬움 36~40, 보통 41~48, 어려움 49~54, 극악 55~58)만큼 셀을 무작위로 제거한다. 각 제거 후 UniqueSolutionValidator로 유일해를 검증하며, 유일해가 깨지면 해당 셀을 복원하고 다른 셀을 선택한다. 목표 제거 수 도달 시 SudokuPuzzle을 구성하여 반환한다. generate(difficulty:) -> SudokuPuzzle 단일 공개 API.","files":["Sdoku/Sdoku/Services/PuzzleGenerator.swift"],"agentType":"backend","estimatedMinutes":40,"order":3,"dependsOn":[1,2],"complexity":"complex"},{"title":"PuzzleGeneratorTests — 단위 테스트","description":"Swift Testing 프레임워크(@Suite, @Test, #expect)로 퍼즐 생성 엔진을 검증한다. 테스트 항목: 완성 그리드 유효성(행/열/3×3박스 중복 없음), 난이도별 givens 개수가 제거 범위를 만족하는지, 반환된 solution이 유효한 완성 그리드인지, 동일 난이도 연속 호출 시 다른 퍼즐 생성 여부(확률적).","files":["Sdoku/SdokuTests/PuzzleGeneratorTests.swift"],"agentType":"backend","estimatedMinutes":25,"order":4,"dependsOn":[3],"complexity":"normal"}],"dependencies":[],"riskFactors":["유일해 검증 성능 — 극악 난이도(55~58셀 제거)에서 유일해를 만족하는 셀 조합을 찾기 어려워 생성 시간이 길어질 수 있다. countSolutions에서 해 2개 발견 즉시 중단하는 조기 종료 로직이 필수이며, 최대 시도 횟수(예: 1000회) 초과 시 그리드 재생성으로 폴백하는 안전장치가 필요하다.","백트래킹 재귀 깊이 — Swift 기본 스택 크기 제한 내에서 81칸 백트래킹이 완료되는지 확인 필요. 대부분 문제없지만 최악 케이스에서 스택 오버플로우 가능성이 있으므로 iterative 방식 전환을 염두에 두어야 한다.","극악 난이도 제거 수 상한 미확정 — Spec에서 제거 수 상한이 잘린 상태(55~5...). 60개 이상 제거 시 유일해 생성 실패 빈도가 급증하므로 58을 실용적 상한으로 설정하고, 추후 조정 가능하도록 Difficulty enum에 범위를 캡슐화한다."],"architectureNotes":{"dataModels":["Difficulty: enum — easy / medium / hard / extreme 4단계. var removalRange: ClosedRange<Int> computed property로 각 난이도의 제거 셀 수 범위를 반환. var displayName: String으로 UI 표시용 이름 제공.","SudokuPuzzle: struct — puzzle: [[Int]] (0=빈 셀, 사용자가 보는 초기 상태), solution: [[Int]] (완성 정답 그리드), difficulty: Difficulty, givens: Int (채워진 셀 수 = 81 - 제거된 수). UI 레이어에서 바로 사용 가능하도록 설계, Codable 채택은 게임 저장 Feature에서 담당."],"protocols":["없음 — 현재 범위에서는 프로토콜 추상화 불필요. GridGenerator와 UniqueSolutionValidator는 enum 또는 struct의 static func로 구현하는 순수 함수 모듈로 설계. 테스트 가능성은 순수 함수(입력→출력)로 보장."],"stateManagement":"완전한 stateless 설계. PuzzleGenerator.generate()는 순수 함수로 매 호출마다 새 SudokuPuzzle 값 타입을 반환한다. 내부 상태 없음. UI 레이어의 게임 상태 관리는 '게임 플레이 화면 및 상태 관리' Feature에서 담당.","dataFlow":"PuzzleGenerator.generate(difficulty:) 호출 → GridGenerator.generateCompleteGrid()로 완성 그리드 생성(백트래킹 + 랜덤 셔플) → solution 복사본 보존 → 난이도별 셀 제거 루프: 랜덤 셀 위치 선택 → 값 임시 제거 → UniqueSolutionValidator.isUnique() 호출 → false이면 값 복원 후 다음 셀 시도 → 목표 제거 수 도달 시 루프 종료 → SudokuPuzzle(puzzle: 제거된 그리드, solution: 원본 완성 그리드, difficulty: 입력값, givens: 남은 셀 수) 생성 후 반환.","affectedFiles":["Sdoku/Sdoku/Models/Difficulty.swift","Sdoku/Sdoku/Models/SudokuPuzzle.swift","Sdoku/Sdoku/Services/GridGenerator.swift","Sdoku/Sdoku/Services/UniqueSolutionValidator.swift","Sdoku/Sdoku/Services/PuzzleGenerator.swift","Sdoku/SdokuTests/PuzzleGeneratorTests.swift"]}}
+```
+
+=== Completed: 2026-04-09T07:55:18Z | Result: success ===

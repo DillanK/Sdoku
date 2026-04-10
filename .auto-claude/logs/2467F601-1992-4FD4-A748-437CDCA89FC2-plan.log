@@ -1,0 +1,76 @@
+=== Plan | Agent: plan-strategist | Feature: 홈 화면 및 게임 기록 저장 ===
+=== Started: 2026-04-09T07:47:10Z ===
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/.auto-claude/codebase-digest.md
+
+[🔧 검색 중] Sdoku/Sdoku/**/*.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/SdokuApp.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ContentView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Persistence.swift
+
+
+=== 비정상 종료 (앱 강제종료) — 2026-04-09T07:48:26Z ===
+
+
+════════════════════════════════════════
+
+=== Plan | Agent: plan-strategist | Feature: 홈 화면 및 게임 기록 저장 ===
+=== Started: 2026-04-09T07:50:23Z ===
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/.auto-claude/codebase-digest.md
+
+[🔧 검색 중] Sdoku/Sdoku/**/*.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/SdokuApp.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ContentView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Persistence.swift
+
+
+=== 비정상 종료 (앱 강제종료) — 2026-04-09T07:52:39Z ===
+
+
+════════════════════════════════════════
+
+=== Plan | Agent: plan-strategist | Feature: 홈 화면 및 게임 기록 저장 ===
+=== Started: 2026-04-09T07:53:37Z ===
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/.auto-claude/codebase-digest.md
+
+[🔧 검색 중] Sdoku/Sdoku/**/*.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/SdokuApp.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ContentView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Persistence.swift
+API Error: Unable to connect to API (ENOTFOUND)
+
+--- 자동 재시도 #1: 프로세스 에러 ---
+
+[🔧 도구 준비] select:Read
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/.auto-claude/codebase-digest.md
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/SdokuApp.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ContentView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/PersistenceController.swift
+
+[🔧 도구 준비] select:Glob
+
+[🔧 검색 중] Sdoku/Sdoku/**/*
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Persistence.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Sdoku.xcdatamodeld/Sdoku.xcdatamodel/contents
+```json
+{"summary":"홈 화면(HomeView) 구현 및 CoreData 기반 게임 기록 저장 레이어 구축. Difficulty enum 공유 타입 정의, GameRecord CoreData 엔티티 추가(기존 Item 엔티티 교체), GameRecordRepository CRUD 서비스, HomeViewModel 통계 상태 관리, HomeView 난이도 선택 UI 및 통계 표시로 구성됨.","estimatedDuration":"2h 40m","subtasks":[{"title":"공유 타입 + CoreData 모델 초기화","description":"Difficulty enum(easy/normal/hard/extreme) 정의. CoreData 모델에서 기존 Item 엔티티를 제거하고 GameRecord 엔티티(difficulty: String, elapsedSeconds: Int64, completedAt: Date, isCompleted: Bool)를 추가. ContentView.swift에서 Item FetchRequest 참조를 제거하여 빌드 안전성 확보.","files":["Sdoku/Sdoku/Difficulty.swift","Sdoku/Sdoku/Sdoku.xcdatamodeld/Sdoku.xcdatamodel/contents","Sdoku/Sdoku/ContentView.swift"],"agentType":"both","estimatedMinutes":30,"order":0,"dependsOn":[],"complexity":"normal"},{"title":"GameRecordRepository 구현","description":"NSManagedObjectContext를 주입받아 GameRecord CRUD를 담당하는 GameRecordRepository 구현. save(difficulty:elapsedSeconds:isCompleted:), fetchStats(for:) → GameRecordStats 메서드 포함. Persistence.swift의 preview 데이터를 GameRecord 기반 샘플 데이터로 교체.","files":["Sdoku/Sdoku/GameRecordRepository.swift","Sdoku/Sdoku/Persistence.swift"],"agentType":"backend","estimatedMinutes":40,"order":1,"dependsOn":[0],"complexity":"normal"},{"title":"HomeViewModel 구현","description":"@Observable HomeViewModel 구현. GameRecordRepository를 주입받아 난이도별 통계(completedCount, bestTime)를 로드하고 노출. selectedDifficulty: Difficulty? 상태로 NavigationStack 전환 트리거. refresh() 메서드로 게임 완료 후 통계 갱신 지원.","files":["Sdoku/Sdoku/HomeViewModel.swift"],"agentType":"backend","estimatedMinutes":30,"order":2,"dependsOn":[1],"complexity":"normal"},{"title":"HomeView 구현 + 앱 진입점 연결","description":"NavigationStack 기반 HomeView 구현: 4개 난이도 선택 버튼, 난이도별 완료 횟수 및 최고 기록 표시. HomeViewModel을 @State로 보유. ContentView.swift를 HomeView 래퍼로 교체. SdokuApp.swift에서 HomeView를 루트 뷰로 연결하고 PersistenceController viewContext를 environment로 전달.","files":["Sdoku/Sdoku/HomeView.swift","Sdoku/Sdoku/ContentView.swift","Sdoku/Sdoku/SdokuApp.swift"],"agentType":"frontend","estimatedMinutes":40,"order":3,"dependsOn":[2],"complexity":"normal"},{"title":"GameRecordRepository 단위 테스트","description":"PersistenceController(inMemory: true)를 사용해 GameRecordRepository 테스트. save() 후 fetchStats()에서 completedCount 증가 및 bestTime 갱신 검증. Swift Testing 프레임워크 사용(@Suite, @Test, #expect).","files":["Sdoku/SdokuTests/GameRecordRepositoryTests.swift"],"agentType":"backend","estimatedMinutes":20,"order":4,"dependsOn":[1],"complexity":"simple"}],"dependencies":[],"riskFactors":["CoreData Item 엔티티 제거 및 GameRecord 교체 시 Xcode 자동 생성 NSManagedObject 서브클래스 재생성 필요 — 빌드 캐시 클린 권장","@Observable macro는 iOS 17+ 필수 — 프로젝트 최소 배포 타겟 확인 필요","게임 플레이 화면(GamePlayView)이 미구현 상태로 HomeView의 NavigationStack destination이 placeholder — 게임 플레이 Feature 완료 후 연결 필요","CoreData .xcdatamodeld XML 직접 편집 시 모델 버전 해시 불일치 가능 — 가능하면 Xcode GUI 편집 권장"],"architectureNotes":{"dataModels":["Difficulty: enum (easy, normal, hard, extreme) — displayName(String), sortOrder(Int) 포함. Sdoku 전역 공유 타입으로 여러 Feature에서 참조.","GameRecord (NSManagedObject): difficulty(String), elapsedSeconds(Int64), completedAt(Date), isCompleted(Bool) — CoreData 자동 생성 class. codeGenerationType=class 유지.","GameRecordStats: struct — completedCount(Int), bestTime(Int?) 를 담는 경량 DTO. CoreData 조회 결과를 View 레이어에 전달하는 용도. Codable 불필요."],"protocols":["GameRecordRepositoryProtocol: func save(difficulty: Difficulty, elapsedSeconds: Int64, isCompleted: Bool) throws, func fetchStats(for difficulty: Difficulty) -> GameRecordStats — 테스트 시 MockGameRecordRepository 주입 지원"],"stateManagement":"@Observable HomeViewModel이 난이도별 stats([Difficulty: GameRecordStats])를 보유. selectedDifficulty: Difficulty? 로 NavigationStack path 제어. Task { await refresh() }로 비동기 통계 재로드. GameRecordRepository는 HomeViewModel이 소유하고 NSManagedObjectContext는 생성 시 주입.","dataFlow":"SdokuApp → HomeView(NavigationStack root) → HomeViewModel(.init 시 fetchStats 호출) → GameRecordRepository → CoreData viewContext. 게임 완료 시: GamePlayView → GameRecordRepository.save() → onDismiss 콜백으로 HomeViewModel.refresh() 호출 → [Difficulty: GameRecordStats] 갱신 → HomeView 통계 UI 업데이트.","affectedFiles":["Sdoku/Sdoku/Difficulty.swift","Sdoku/Sdoku/Sdoku.xcdatamodeld/Sdoku.xcdatamodel/contents","Sdoku/Sdoku/ContentView.swift","Sdoku/Sdoku/GameRecordRepository.swift","Sdoku/Sdoku/Persistence.swift","Sdoku/Sdoku/HomeViewModel.swift","Sdoku/Sdoku/HomeView.swift","Sdoku/Sdoku/SdokuApp.swift","Sdoku/SdokuTests/GameRecordRepositoryTests.swift"]}}
+```
+
+=== Completed: 2026-04-09T08:02:24Z | Result: success | Tokens: 8.9K (in:68 out:8.8K) | Cache: 67.1Kr/14.5Kw | 10턴 | Cost: <$0.001 ===

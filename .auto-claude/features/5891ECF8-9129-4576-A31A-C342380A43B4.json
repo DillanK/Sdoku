@@ -1,0 +1,229 @@
+{
+  "attachments" : [
+
+  ],
+  "buildFixAttemptCount" : 0,
+  "createdAt" : "2026-04-09T07:42:04Z",
+  "customSkillFileNames" : [
+
+  ],
+  "description" : "로컬에서 혼자 즐기는 스도쿠\n쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.",
+  "designDocs" : [
+
+  ],
+  "developLog" : "",
+  "developStatus" : "idle",
+  "failureRequeueCount" : 0,
+  "id" : "5891ECF8-9129-4576-A31A-C342380A43B4",
+  "isMerged" : false,
+  "issueDepth" : 0,
+  "kanbanStatus" : "done",
+  "lifecycleStage" : "sparkCompleted",
+  "mergeHistory" : [
+
+  ],
+  "references" : [
+    {
+      "createdAt" : "2026-04-09T07:43:39Z",
+      "description" : "2026년 주요 스도쿠 앱 비교 및 순위",
+      "id" : "8AE2849F-1212-46B4-A4D9-6F62D50F0E28",
+      "isSelected" : true,
+      "source" : "webSearch",
+      "title" : "Best Sudoku Apps in 2026: Tested & Ranked",
+      "type" : "link",
+      "url" : "https:\/\/sudokuaday.com\/best-sudoku-app-comparison"
+    },
+    {
+      "createdAt" : "2026-04-09T07:43:39Z",
+      "description" : "iPhone 스도쿠 앱 Top 10 가이드",
+      "id" : "7CC47AD2-E2F1-45CA-A251-5A7A4C2E9232",
+      "isSelected" : true,
+      "source" : "webSearch",
+      "title" : "Best Sudoku Apps for iPhone 2025",
+      "type" : "link",
+      "url" : "https:\/\/sudokutimes.com\/best-sudoku-apps-for-iphone\/"
+    },
+    {
+      "createdAt" : "2026-04-09T07:43:39Z",
+      "description" : "난이도별 퍼즐 생성 알고리즘 논문",
+      "id" : "57E3D9D5-C29C-488E-A182-004A128A5224",
+      "isSelected" : true,
+      "source" : "webSearch",
+      "title" : "Sudoku Puzzles Generating: from Easy to Evil",
+      "type" : "link",
+      "url" : "https:\/\/zhangroup.aporc.org\/images\/files\/Paper_3485.pdf"
+    },
+    {
+      "createdAt" : "2026-04-09T07:43:39Z",
+      "description" : "스도쿠 난이도 등급화 방법론",
+      "id" : "4C0BC89F-DAC5-4E10-9079-A07590325F40",
+      "isSelected" : true,
+      "source" : "webSearch",
+      "title" : "Grading the difficulty of a Sudoku puzzle",
+      "type" : "link",
+      "url" : "https:\/\/www.kevinhooke.com\/2021\/07\/23\/grading-the-difficulty-of-a-sudoku-puzzle\/"
+    },
+    {
+      "createdAt" : "2026-04-09T07:43:39Z",
+      "description" : "오픈소스 경량 오프라인 스도쿠 앱",
+      "id" : "4B19B118-CB5B-45DE-8307-F5F9D18F1D38",
+      "isSelected" : true,
+      "source" : "webSearch",
+      "title" : "OpenSudoku: Lightweight Mobile Sudoku",
+      "type" : "link",
+      "url" : "https:\/\/blog.puresudokupuzzle.com\/uncategorized\/opensudoku\/"
+    }
+  ],
+  "registeredIssueFeatureMap" : [
+
+  ],
+  "savedPromptSections" : {
+
+  },
+  "sparkData" : {
+    "analysisScope" : "both",
+    "benchmarkingResult" : "## 🔍 벤치마킹 결과\n\n### 주요 경쟁 앱 분석\n\n| 앱 | 특징 | 참고 포인트 |\n|---|---|---|\n| **Sudoku a Day** | 100% 광고 없음, 미니멀 UI, App Store 5.0 평점 | 로컬 오프라인 플레이 + 깔끔한 UX의 성공 사례 |\n| **Sudoku.com (Easybrain)** | 20,000+ 퍼즐, 6단계 난이도 | 다단계 난이도 체계의 레퍼런스 |\n| **Sudoku Blox** | 2026 에디터스 초이스, 데일리 퍼즐 | 일일 챌린지로 리텐션 확보 |\n| **OpenSudoku** | 오픈소스, 경량, 완전 오프라인 | 로컬 전용 앱의 구조적 참고 |\n\n### 공통 UX 패턴\n\n- **입력 방식**: 셀 선택 → 숫자 패드 탭 (표준), 연관 행\/열\/박스 하이라이트\n- **메모(Pencil Mark)**: 후보 숫자 기입 기능은 사실상 필수 기능\n- **Undo\/Redo**: 무제한 실행취소 스택\n- **에러 표시**: 실시간 충돌 감지 (같은 행\/열\/박스 중복 하이라이트)\n- **다크 모드**: 장시간 플레이를 위한 테마 커스터마이징\n\n### 난이도 설계 베스트 프랙티스\n\n- **초기 힌트 수 기반**: 빈 셀이 많을수록 어려움 (최소 17개 힌트가 유일해 보장 하한)\n- **풀이 기법 기반 등급화**: Easy(Naked Single만), Medium(Hidden Pair), Hard(X-Wing 등), Expert(Swordfish, 체이닝)\n- 4단계 난이도(쉬움\/보통\/어려움\/극악)는 업계 표준과 잘 부합함\n\n## 📋 프로젝트 현황\n\n### 현재 상태\n- **프로젝트**: Xcode SwiftUI + CoreData 템플릿 상태 (게임 로직 미구현)\n- **iOS 26.2** 타겟, iPhone + iPad 지원\n- **Spark 단계** — 아이디어 구체화 진행 중\n\n### 기존 항목과의 관계\n- 현재 등록된 다른 아이디어가 없으므로 **중복 항목 없음**\n- 기존 CoreData `Item` 엔티티는 템플릿 코드로, 게임 모델로 교체 필요\n\n## 💡 추천 관련 기능\n\n1. **메모(Pencil Mark) 시스템** — 후보 숫자 기입은 스도쿠 앱의 핵심 기능으로, 난이도가 올라갈수록 필수적이며 사용자 만족도에 직접적 영향\n2. **게임 통계 & 기록** — 난이도별 클리어 시간, 최고 기록, 완료 횟수 등을 추적하면 로컬 플레이에서도 리텐션 동기 부여 가능\n3. **데일리 챌린지** — 매일 새로운 퍼즐 1개를 제공하는 패턴으로, 네트워크 없이도 날짜 기반 시드(seed)로 구현 가능하며 일일 플레이 습관 형성에 효과적\n\n<!--REFERENCES_START-->\n[\n  {\"title\": \"Best Sudoku Apps in 2026: Tested & Ranked\", \"url\": \"https:\/\/sudokuaday.com\/best-sudoku-app-comparison\", \"description\": \"2026년 주요 스도쿠 앱 비교 및 순위\"},\n  {\"title\": \"Best Sudoku Apps for iPhone 2025\", \"url\": \"https:\/\/sudokutimes.com\/best-sudoku-apps-for-iphone\/\", \"description\": \"iPhone 스도쿠 앱 Top 10 가이드\"},\n  {\"title\": \"Sudoku Puzzles Generating: from Easy to Evil\", \"url\": \"https:\/\/zhangroup.aporc.org\/images\/files\/Paper_3485.pdf\", \"description\": \"난이도별 퍼즐 생성 알고리즘 논문\"},\n  {\"title\": \"Grading the difficulty of a Sudoku puzzle\", \"url\": \"https:\/\/www.kevinhooke.com\/2021\/07\/23\/grading-the-difficulty-of-a-sudoku-puzzle\/\", \"description\": \"스도쿠 난이도 등급화 방법론\"},\n  {\"title\": \"OpenSudoku: Lightweight Mobile Sudoku\", \"url\": \"https:\/\/blog.puresudokupuzzle.com\/uncategorized\/opensudoku\/\", \"description\": \"오픈소스 경량 오프라인 스도쿠 앱\"}\n]\n<!--REFERENCES_END-->",
+    "conversations" : [
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "[iOS] Sdoku: 로컬에서 혼자 즐기는 스도쿠\n쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.",
+        "id" : "8721874C-70A8-4555-BA55-C20C4985C960",
+        "isUser" : true,
+        "timestamp" : "2026-04-09T07:42:04Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## 🔍 벤치마킹 결과\n\n### 주요 경쟁 앱 분석\n\n| 앱 | 특징 | 참고 포인트 |\n|---|---|---|\n| **Sudoku a Day** | 100% 광고 없음, 미니멀 UI, App Store 5.0 평점 | 로컬 오프라인 플레이 + 깔끔한 UX의 성공 사례 |\n| **Sudoku.com (Easybrain)** | 20,000+ 퍼즐, 6단계 난이도 | 다단계 난이도 체계의 레퍼런스 |\n| **Sudoku Blox** | 2026 에디터스 초이스, 데일리 퍼즐 | 일일 챌린지로 리텐션 확보 |\n| **OpenSudoku** | 오픈소스, 경량, 완전 오프라인 | 로컬 전용 앱의 구조적 참고 |\n\n### 공통 UX 패턴\n\n- **입력 방식**: 셀 선택 → 숫자 패드 탭 (표준), 연관 행\/열\/박스 하이라이트\n- **메모(Pencil Mark)**: 후보 숫자 기입 기능은 사실상 필수 기능\n- **Undo\/Redo**: 무제한 실행취소 스택\n- **에러 표시**: 실시간 충돌 감지 (같은 행\/열\/박스 중복 하이라이트)\n- **다크 모드**: 장시간 플레이를 위한 테마 커스터마이징\n\n### 난이도 설계 베스트 프랙티스\n\n- **초기 힌트 수 기반**: 빈 셀이 많을수록 어려움 (최소 17개 힌트가 유일해 보장 하한)\n- **풀이 기법 기반 등급화**: Easy(Naked Single만), Medium(Hidden Pair), Hard(X-Wing 등), Expert(Swordfish, 체이닝)\n- 4단계 난이도(쉬움\/보통\/어려움\/극악)는 업계 표준과 잘 부합함\n\n## 📋 프로젝트 현황\n\n### 현재 상태\n- **프로젝트**: Xcode SwiftUI + CoreData 템플릿 상태 (게임 로직 미구현)\n- **iOS 26.2** 타겟, iPhone + iPad 지원\n- **Spark 단계** — 아이디어 구체화 진행 중\n\n### 기존 항목과의 관계\n- 현재 등록된 다른 아이디어가 없으므로 **중복 항목 없음**\n- 기존 CoreData `Item` 엔티티는 템플릿 코드로, 게임 모델로 교체 필요\n\n## 💡 추천 관련 기능\n\n1. **메모(Pencil Mark) 시스템** — 후보 숫자 기입은 스도쿠 앱의 핵심 기능으로, 난이도가 올라갈수록 필수적이며 사용자 만족도에 직접적 영향\n2. **게임 통계 & 기록** — 난이도별 클리어 시간, 최고 기록, 완료 횟수 등을 추적하면 로컬 플레이에서도 리텐션 동기 부여 가능\n3. **데일리 챌린지** — 매일 새로운 퍼즐 1개를 제공하는 패턴으로, 네트워크 없이도 날짜 기반 시드(seed)로 구현 가능하며 일일 플레이 습관 형성에 효과적",
+        "id" : "599BB9A3-344A-491F-BF0F-5B7A6B05C2D8",
+        "isUser" : false,
+        "timestamp" : "2026-04-09T07:43:39Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## Sdoku — 아이디어 구체화\n\n벤치마킹 결과를 보면, 4단계 난이도(쉬움\/보통\/어려움\/극악) 구성은 업계 표준에 잘 부합하고, 로컬 오프라인 스도쿠 앱은 깔끔한 UX만으로도 충분히 높은 평가를 받을 수 있습니다. 좋은 출발점입니다.\n\n아직 파악이 필요한 영역에 대해 질문드립니다:\n\n### 질문\n\n1. **대상 사용자와 목적** — 이 앱의 주 사용자는 누구인가요? (예: 스도쿠 입문자를 위한 캐주얼 퍼즐 앱 vs. 숙련자를 위한 고난도 도전 앱 vs. 모든 레벨을 아우르는 범용 앱) 그리고 기존 앱 대비 Sdoku만의 차별점이나 핵심 가치가 있다면 무엇인가요?\n\n2. **화면 구성** — 앱을 열었을 때 사용자가 경험하는 흐름을 어떻게 그리고 계신가요? 예를 들어, `난이도 선택 → 게임 플레이` 정도의 단순 흐름인지, 아니면 홈 화면(통계\/기록 포함), 게임 화면, 설정 화면 등 여러 화면이 필요한지 대략적인 구상이 있으시면 알려주세요.",
+        "id" : "77BF577A-2359-4F9D-8AAD-778557594016",
+        "isUser" : false,
+        "timestamp" : "2026-04-09T07:44:29Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## Sdoku — 대상 사용자 및 화면 구성 정의\n\n### 1️⃣ 대상 사용자와 차별점\n\n**주 사용자**: 스도쿠 입문자~중급자를 중심으로, 모든 레벨을 아우르는 범용 앱을 지향합니다.\n\n**차별점**:\n- **광고 완전 제거** — Sudoku a Day의 성공 패턴을 따라, 광고 없는 순수 플레이 경험 제공\n- **경량성 + 완전 오프라인** — OpenSudoku처럼 네트워크 의존 없이 언제 어디서나 즉시 플레이 가능\n- **깔끔한 미니멀 UI** — Sudoku a Day의 5.0 평점 요인인 \"심플함\"에 집중 (복잡한 기능 배제)\n\n**데이터 기반**: 벤치마킹에서 상위 앱들이 모두 로컬 전용이면서도 높은 평가를 받은 점은, **차별점이 사양이 아닌 경험**임을 시사합니다.\n\n---\n\n### 2️⃣ 화면 구성 및 흐름\n\n**4-화면 구조**로 설계합니다:\n\n| 화면 | 역할 | 포함 요소 |\n|---|---|---|\n| **홈 화면** | 게임 시작점 | 난이도 버튼 4개(쉬움\/보통\/어려움\/극악), 통계 요약(완료 횟수\/최고 기록) |\n| **게임 플레이** | 핵심 UX | 9×9 그리드, 숫자 패드, 메모 토글 버튼, 실행취소\/재시작 |\n| **설정** | 테마\/접근성 | 다크모드 토글, 음향 on\/off |\n| **통계 상세** | 진행률 추적 | 난이도별 클리어 시간, 완료 횟수 |\n\n**진행 흐름**:  \n`홈 → 난이도 선택 → 게임 플레이 → 완료\/포기 → 홈`\n\n**설계 근거**:\n- 벤치마킹의 \"필수 기능\" (메모, 실행취소, 에러 표시)만 포함\n- 게임 통계는 로컬 리텐션 동기부여 (홈 화면 요약으로 중량감 최소화)\n- Sudoku Blox의 \"일일 챌린지\" 개념은 v1에서는 제외 (MVP 이후 고려)\n\n---\n\n**다음 단계**: 게임 로직 구현 및 CoreData 스키마 설계로 진행하겠습니다.",
+        "id" : "CA8FB4A1-D446-496A-A587-C42B053F78E6",
+        "isUser" : true,
+        "timestamp" : "2026-04-09T07:44:44Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## Sdoku — 구체화 완료 요약\n\n대상 사용자, 화면 구성 모두 명확하게 정의되었습니다. 마지막으로 **우선순위와 복잡도**를 확인합니다.\n\n### 질문\n\n1. **MVP 우선순위** — 4개 화면 중 v1 출시에 반드시 포함해야 할 범위는 어디까지인가요? 예를 들어, 통계 상세 화면과 설정 화면은 v1 이후로 미루고 **홈 + 게임 플레이**만으로 먼저 출시하는 것도 가능할까요? 아니면 4개 화면 모두 v1 필수인가요?\n\n2. **개발 일정 감각** — 이 프로젝트에 투입할 수 있는 시간적 여유가 어느 정도인지 (예: 주말 프로젝트 수준 vs. 수주간 집중 개발) 감각이 있으면, 기능 범위를 현실적으로 조정하는 데 도움이 됩니다.",
+        "id" : "43D5820F-055A-4EBD-AF7B-2B6A93503FBD",
+        "isUser" : false,
+        "timestamp" : "2026-04-09T07:45:00Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## Sdoku — MVP 범위 결정 및 개발 계획\n\n### 1️⃣ MVP 우선순위: **홈 + 게임 플레이만 v1 필수**\n\n**결정**:  \n- **v1.0 포함**: 홈 화면(난이도 선택) + 게임 플레이(그리드, 숫자 패드, 메모, 실행취소)\n- **v1.1 이후 미룸**: 설정 화면, 통계 상세 화면\n\n**근거**:\n1. **벤치마킹의 핵심 인사이트** — Sudoku a Day(5.0 평점)의 성공 요인은 \"복잡한 기능\"이 아니라 \"깔끔한 게임 경험 자체\"\n2. **최소 기능 집중** — 통계는 리텐션 보조 기능이지, 첫 출시에서 게임 품질이 떨어지면 의미 없음\n3. **시간 투자 효율** — 스도쿠 퍼즐 생성 + 유효성 검증 로직이 복잡하므로, 그곳에 역량 집중이 필수\n\n---\n\n### 2️⃣ 개발 일정 감각 기반 현실적 계획\n\n사용자 회신이 없으므로, **일반적인 SwiftUI 싱글 개발자 기준**으로 제시합니다:\n\n| 영역 | 예상 복잡도 | 소요 시간 |\n|---|---|---|\n| **스도쿠 퍼즐 생성 및 검증** | ⭐⭐⭐ (가장 복잡) | 3~5일 |\n| **게임 상태 관리 (그리드, 입력 처리)** | ⭐⭐ | 2~3일 |\n| **메모 시스템 + 실행취소** | ⭐⭐ | 1~2일 |\n| **UI 구현 (홈 + 게임 화면)** | ⭐⭐ | 2~3일 |\n| **테스트 & 버그 픽스** | ⭐⭐⭐ | 2~3일 |\n| **v1.0 출시** | | **~2주** |\n\n**추가**: 주말 프로젝트 수준이면 **3주 정도 현실적**입니다. 수주간 집중 개발 가능하면 v1.1(설정, 통계)까지 통합 가능합니다.\n\n---\n\n### 📌 다음 단계\n이제 **게임 로직 명세 작성** 단계입니다:\n- 스도쿠 퍼즐 생성 알고리즘 (백트래킹 vs. 난이도별 사전 퍼즐 세트)\n- 데이터 모델 설계 (CoreData 엔티티: Game, GameCell 등)\n\n이 부분에 대해 기술적 조언이 필요하시면 말씀해주세요.",
+        "id" : "932B02CA-232E-4225-AD51-B41A306A2C2D",
+        "isUser" : true,
+        "timestamp" : "2026-04-09T07:45:25Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## Sdoku — Spark 구체화 완료\n\n3개 영역 모두 파악되었습니다. 최종 Feature 정의를 정리합니다.\n\n---\n\n### Feature 정의\n\n| 항목 | 내용 |\n|---|---|\n| **제목** | Sdoku — 로컬 오프라인 스도쿠 |\n| **대상** | 입문자~중급자 중심, 모든 레벨 범용 |\n| **핵심 가치** | 광고 없음, 완전 오프라인, 미니멀 UX |\n| **난이도** | 쉬움 \/ 보통 \/ 어려움 \/ 극악 (4단계) |\n\n### v1.0 MVP 범위\n\n- **홈 화면** — 난이도 선택 버튼 4개\n- **게임 플레이** — 9x9 그리드, 숫자 패드, 메모(Pencil Mark), 실행취소, 실시간 충돌 감지\n\n### v1.1 이후\n\n- 설정 화면 (다크모드, 음향)\n- 통계 상세 (난이도별 클리어 시간, 완료 횟수)\n- 데일리 챌린지 (날짜 시드 기반)\n\n### 핵심 기술 과제\n\n| 과제 | 복잡도 |\n|---|---|\n| 퍼즐 생성 + 유일해 검증 | 높음 — 백트래킹 알고리즘 + 난이도별 풀이 기법 등급화 |\n| 게임 상태 관리 | 중간 — 그리드 모델, 입력 처리, Undo 스택 |\n| UI 구현 | 중간 — SwiftUI 그리드 + 숫자 패드 |\n\n### 태그\n\n`#iOS` `#SwiftUI` `#게임` `#오프라인` `#MVP`\n\n---\n\nSpark 단계가 완료되었습니다. 다음 단계(게임 로직 명세 또는 구현 계획)로 진행하시려면 말씀해주세요.",
+        "id" : "F0E5085F-1B63-4BF1-B8C3-462976BDAA5A",
+        "isUser" : false,
+        "timestamp" : "2026-04-09T07:45:56Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## Sdoku — Spark 완료 승인 및 다음 단계\n\n### ✅ v1.0 범위 확정\n\n분석가의 정리가 우리 기획 의도를 정확히 반영합니다. 이대로 진행하겠습니다.\n\n**한 가지 확인**: 홈 화면의 \"통계 요약(완료 횟수\/최고 기록)\"은 **v1.0에 포함**합니다.\n- **근거**: 최소 데이터이면서도, 게임 후 즉각적인 피드백(리텐션 신호)로 필요\n- **구현 범위**: CoreData 기록 저장 → 홈에서 집계 표시 (통계 상세 화면보다 간단)\n\n---\n\n### 🔧 다음 단계: **게임 로직 상세 명세**\n\n구현 진입 전 다음 3가지를 명세서로 정리하겠습니다:\n\n1. **퍼즐 생성 알고리즘**\n   - 난이도별 빈 셀 개수 (쉬움 30개, 보통 40개, 어려움 50개, 극악 60개 참고)\n   - 유일해 검증: 백트래킹 + 단순 풀이 기법 등급화? (복잡도 vs. 정확도 트레이드오프)\n\n2. **게임 상태 모델**\n   - 그리드 데이터 구조 (초기값, 입력값, 메모 분리)\n   - Undo 스택 메커니즘\n   - 충돌 감지 규칙 (행\/열\/박스)\n\n3. **CoreData 스키마**\n   - 게임 기록 (난이도, 소요 시간, 완료 여부, 생성일시)\n   - 진행 중인 게임 자동 저장 (중단 후 재개 가능)\n\n**제안**: 퍼즐 생성 로직(가장 복잡)을 프로토타입으로 먼저 검증한 후 전체 구현에 진입하겠습니다.\n\n---\n\n### 📋 단계 진행 상태\n- **현재**: Spark 단계 완료 ✅\n- **다음**: Phase 2 — 게임 로직 상세 설계\n\n구현 시작할 준비가 되었습니다. 명세서 작성을 시작할까요?",
+        "id" : "A3B0098E-8524-4D5C-9663-774B97AC18DA",
+        "isUser" : true,
+        "timestamp" : "2026-04-09T07:46:22Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## 아이디어 요약\n\n로컬 오프라인 전용 스도쿠 앱 — 광고 없이 미니멀한 UX로, 4단계 난이도(쉬움\/보통\/어려움\/극악)의 퍼즐을 즐기는 iOS 앱\n\n**목적**: 광고와 네트워크 없이 언제 어디서나 즉시 플레이할 수 있는 깔끔한 스도쿠 경험 제공\n\n**대상 사용자**: 스도쿠 입문자~중급자 중심, 모든 레벨 범용\n\n**화면 구성**: 새 화면 2개 필요\n- **홈 화면** — 난이도 선택 버튼 4개 + 통계 요약(완료 횟수\/최고 기록)\n- **게임 플레이 화면** — 9x9 그리드, 숫자 패드, 메모(Pencil Mark), 실행취소, 실시간 충돌 감지\n\n**우선순위**: 높음\n\n**예상 복잡도**: 복잡 (퍼즐 생성 + 유일해 검증 알고리즘, 게임 상태 관리, CoreData 기록 저장)\n\n구체화가 완료되었습니다.\n<!--SPLIT_JUDGMENT_START-->\n{\n    \"shouldSplit\": true,\n    \"reason\": \"퍼즐 생성 엔진, 게임 플레이 UI\/상태관리, 홈 화면+통계가 각각 독립적인 도메인이며 예상 복잡도가 '복잡'\",\n    \"subFeatures\": [\n        {\"title\": \"스도쿠 퍼즐 생성 엔진\", \"description\": \"백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 로직 모듈. UI 없이 독립 테스트 가능한 단위.\", \"tags\": [\"#algorithm\", \"#core-logic\"]},\n        {\"title\": \"게임 플레이 화면 및 상태 관리\", \"description\": \"9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 게임 플레이 핵심 화면 구현.\", \"tags\": [\"#SwiftUI\", \"#game-state\"]},\n        {\"title\": \"홈 화면 및 게임 기록 저장\", \"description\": \"난이도 선택 UI, CoreData 기반 게임 기록 저장(난이도\/소요시간\/완료여부), 홈 화면 통계 요약(완료 횟수\/최고 기록) 표시.\", \"tags\": [\"#SwiftUI\", \"#CoreData\", \"#home\"]}\n    ]\n}\n<!--SPLIT_JUDGMENT_END-->",
+        "id" : "CB65C760-A7F8-4E22-86C6-27DD9BD0A6F9",
+        "isUser" : false,
+        "timestamp" : "2026-04-09T07:46:51Z"
+      },
+      {
+        "attachedFileNames" : [
+
+        ],
+        "content" : "## ✂️ 자동 분할 완료\n\n퍼즐 생성 엔진, 게임 플레이 UI\/상태관리, 홈 화면+통계가 각각 독립적인 도메인이며 예상 복잡도가 '복잡'\n\n다음과 같이 분할되어 자동으로 진행됩니다:\n1. **스도쿠 퍼즐 생성 엔진** — 백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 로직 모듈. UI 없이 독립 테스트 가능한 단위.\n2. **게임 플레이 화면 및 상태 관리** — 9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 게임 플레이 핵심 화면 구현.\n3. **홈 화면 및 게임 기록 저장** — 난이도 선택 UI, CoreData 기반 게임 기록 저장(난이도\/소요시간\/완료여부), 홈 화면 통계 요약(완료 횟수\/최고 기록) 표시.",
+        "id" : "C52BC332-7979-4E0B-87EA-5B6569FF01BD",
+        "isUser" : false,
+        "timestamp" : "2026-04-09T07:46:51Z"
+      }
+    ],
+    "isNewScreen" : false,
+    "isRefined" : true,
+    "originalIdea" : "[iOS] Sdoku: 로컬에서 혼자 즐기는 스도쿠\n쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.",
+    "priority" : "Medium",
+    "refinedSummary" : "## 아이디어 요약\n\n로컬 오프라인 전용 스도쿠 앱 — 광고 없이 미니멀한 UX로, 4단계 난이도(쉬움\/보통\/어려움\/극악)의 퍼즐을 즐기는 iOS 앱\n\n**목적**: 광고와 네트워크 없이 언제 어디서나 즉시 플레이할 수 있는 깔끔한 스도쿠 경험 제공\n\n**대상 사용자**: 스도쿠 입문자~중급자 중심, 모든 레벨 범용\n\n**화면 구성**: 새 화면 2개 필요\n- **홈 화면** — 난이도 선택 버튼 4개 + 통계 요약(완료 횟수\/최고 기록)\n- **게임 플레이 화면** — 9x9 그리드, 숫자 패드, 메모(Pencil Mark), 실행취소, 실시간 충돌 감지\n\n**우선순위**: 높음\n\n**예상 복잡도**: 복잡 (퍼즐 생성 + 유일해 검증 알고리즘, 게임 상태 관리, CoreData 기록 저장)\n\n구체화가 완료되었습니다.",
+    "splitProposal" : {
+      "reason" : "퍼즐 생성 엔진, 게임 플레이 UI\/상태관리, 홈 화면+통계가 각각 독립적인 도메인이며 예상 복잡도가 '복잡'",
+      "shouldSplit" : true,
+      "subFeatures" : [
+        {
+          "description" : "백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 로직 모듈. UI 없이 독립 테스트 가능한 단위.",
+          "tags" : [
+            "#algorithm",
+            "#core-logic"
+          ],
+          "title" : "스도쿠 퍼즐 생성 엔진"
+        },
+        {
+          "description" : "9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 게임 플레이 핵심 화면 구현.",
+          "tags" : [
+            "#SwiftUI",
+            "#game-state"
+          ],
+          "title" : "게임 플레이 화면 및 상태 관리"
+        },
+        {
+          "description" : "난이도 선택 UI, CoreData 기반 게임 기록 저장(난이도\/소요시간\/완료여부), 홈 화면 통계 요약(완료 횟수\/최고 기록) 표시.",
+          "tags" : [
+            "#SwiftUI",
+            "#CoreData",
+            "#home"
+          ],
+          "title" : "홈 화면 및 게임 기록 저장"
+        }
+      ]
+    },
+    "targetUsers" : ""
+  },
+  "splitStatus" : "split",
+  "stageMetrics" : {
+
+  },
+  "subtaskResults" : [
+
+  ],
+  "tags" : [
+
+  ],
+  "title" : "Sdoku",
+  "updatedAt" : "2026-04-09T07:46:51Z",
+  "verifyBounceCount" : 0
+}

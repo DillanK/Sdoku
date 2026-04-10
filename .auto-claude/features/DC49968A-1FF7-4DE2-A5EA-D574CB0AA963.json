@@ -1,0 +1,67 @@
+{
+  "analysisData" : {
+    "analysisSummary" : "",
+    "attachedFileNames" : [
+
+    ],
+    "codeMapping" : "",
+    "crossReview" : "",
+    "directInput" : "",
+    "featureAnalysis" : "",
+    "isCompleted" : false,
+    "phaseStatuses" : {
+      "analysis" : "failed"
+    },
+    "scope" : "both",
+    "tags" : [
+
+    ],
+    "uiAnalysis" : "",
+    "uxAnalysis" : ""
+  },
+  "attachments" : [
+
+  ],
+  "buildFixAttemptCount" : 0,
+  "createdAt" : "2026-04-10T04:53:36Z",
+  "customSkillFileNames" : [
+
+  ],
+  "description" : "현재 까지 작업한 내용이 Master에 머지가 되었는지 확인 요청",
+  "designDocs" : [
+
+  ],
+  "developLog" : "",
+  "developStatus" : "idle",
+  "failureRequeueCount" : 0,
+  "id" : "DC49968A-1FF7-4DE2-A5EA-D574CB0AA963",
+  "isMerged" : false,
+  "issueDepth" : 0,
+  "kanbanStatus" : "review",
+  "lifecycleStage" : "analysis",
+  "mergeHistory" : [
+
+  ],
+  "references" : [
+
+  ],
+  "registeredIssueFeatureMap" : [
+
+  ],
+  "savedPromptSections" : {
+
+  },
+  "splitStatus" : "none",
+  "stageMetrics" : {
+
+  },
+  "subtaskResults" : [
+
+  ],
+  "tags" : [
+
+  ],
+  "title" : "Branch Master 머지 여부 확인",
+  "updatedAt" : "2026-04-10T04:57:06Z",
+  "verifyBounceCount" : 0
+}
