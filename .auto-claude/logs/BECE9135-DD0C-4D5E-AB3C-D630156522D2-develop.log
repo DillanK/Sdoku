@@ -1,0 +1,1382 @@
+=== Develop | Agent: auto-developer | Feature: 버그 수정 및 UI 변경 ===
+=== Started: 2026-04-10T07:38:47Z ===
+
+=== Develop 진입 전 빌드 검증 ===
+프로젝트: /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku.xcodeproj, scheme: Sdoku
+xcodebuild 출력:
+2026-04-10 16:38:50.377 xcodebuild[67398:1470938] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+xcodebuild: error: Unable to find a destination matching the provided destination specifier:
+		{ platform:macOS }
+
+	Available destinations for the "Sdoku" scheme:
+		{ platform:iOS, arch:arm64, id:00008150-001945180AF1401C, name:@Salon }
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+		{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+		{ platform:iOS Simulator, arch:x86_64, id:918FC6B7-7E0E-4ECD-BC1C-F9A8F42AA736, OS:26.2, name:iPad (A16) }
+		{ platform:iOS Simulator, arch:x86_64, id:25A63998-87FF-4780-95CC-BE07AF18BE3A, OS:26.2, name:iPad Air 11-inch (M3) }
+		{ platform:iOS Simulator, arch:x86_64, id:1BEC5CF2-590A-47FB-B21C-C90737E982D7, OS:26.2, name:iPad Air 13-inch (M3) }
+		{ platform:iOS Simulator, arch:x86_64, id:2D089899-93EE-42F5-A483-0B5BDE14AB85, OS:26.2, name:iPad Pro 11-inch (M5) }
+		{ platform:iOS Simulator, arch:x86_64, id:8C93658E-572E-4B4F-85E5-5336DB8A4133, OS:26.2, name:iPad Pro 13-inch (M5) }
+		{ platform:iOS Simulator, arch:x86_64, id:956282DA-C562-421D-A483-E53D0455A0A2, OS:26.2, name:iPad mini (A17 Pro) }
+		{ platform:iOS Simulator, arch:x86_64, id:479E382D-5F7D-438A-87FE-AD5323BF9B94, OS:26.2, name:iPhone 16e }
+		{ platform:iOS Simulator, arch:x86_64, id:21A9B6CD-1911-4B14-9808-92D0BE61A0DA, OS:26.2, name:iPhone 17 }
+		{ platform:iOS Simulator, arch:x86_64, id:2E3EA350-877A-4636-A09E-E22EDC851A85, OS:26.2, name:iPhone 17 Pro }
+		{ platform:iOS Simulator, arch:x86_64, id:75BFBA34-0F51-4AB1-B828-CC06AA6D7A71, OS:26.2, name:iPhone 17 Pro Max }
+		{ platform:iOS Simulator, arch:x86_64, id:86554B05-5264-4001-B620-6125B02B5A14, OS:26.2, name:iPhone Air }
+
+✅ 빌드 프리체크 통과
+
+=== 사전 코드베이스 분석 ===
+---
+
+### FILE_STRUCTURE
+
+```
+Sdoku/Sdoku/
+├── Views/
+│   ├── GameView.swift                          # 메인 게임 화면 (그리드 + 컨트롤 + 숫자패드 조합)
+│   └── Components/
+│       ├── SudokuCellView.swift                # [수정 대상] 단일 셀 렌더링
+│       ├── SudokuGridView.swift                # [수정 대상] 9x9 그리드 + 탭 이벤트
+│       ├── NumberPadView.swift                 # [수정 대상] 숫자 입력 패드 (1~9 + 지우기)
+│       └── GameControlsView.swift              # 게임 컨트롤 (언두, 펜슬 모드 등)
+├── ViewModels/
+│   └── GameViewModel.swift                     # 게임 상태 관리 (@Observable)
+├── Models/
+│   ├── SudokuCell.swift                        # 셀 데이터 모델
+│   ├── SudokuBoard.swift                       # 9x9 보드 모델
+│   └── GameState.swift                         # 선택 상태, Undo 스택 포함
+```
+
+---
+
+### KEY_DEPENDENCIES
+
+```
+GameView
+  └── @State GameViewModel
+        ├── SudokuGridView(@State viewModel)  ──→  selectCell(row:col:)
+        │     └── SudokuCellView(cell, isSelected, isRelated)
+        │           └── NoteGridView(notes)   [private]
+        ├── GameControlsView(@Bindable viewModel)
+        └── NumberPadView(@Bindable viewModel)
+              ├── viewModel.inputNumber(_:)
+              └── viewModel.clearCell()
+
+GameViewModel (@Observable)
+  ├── board: SudokuBoard        → cells[row][col]: SudokuCell
+  ├── selectedRow: Int?
+  ├── selectedCol: Int?
+  ├── isPencilMode: Bool
+  └── canUndo: Bool
+
+SudokuCell
+  ├── value: Int       (0 = 빈칸)
+  ├── isFixed: Bool
+  ├── notes: Set<Int>
+  └── isConflict: Bool
+```
+
+---
+
+### RELEVANT_SNIPPETS
+
+#### 버그 원인: 빈 셀 선택 안 되는 문제
+
+**`NumberPadView.swift:9-12`** — `isDisabled` 조건이 선택 없을 때 `false` 반환하여 정상처럼 보이나, 실제 버그는 `SudokuGridView`의 탭 동작에 있지 않음
+
+**`GameViewModel.swift:29-37`** — `selectCell` 로직: 이미 선택된 셀을 탭하면 선택 해제 (정상). 문제는 `NumberPadView`의 `isDisabled`가 **선택이 없을 때** `false`를 반환해, 숫자 버튼을 탭하면 `inputNumber` → `guard let row = state.selectedRow` 실패 → 아무것도 안 일어남. 하지만 실제 **빈 셀 선택** 버그는 다른 곳:
+
+```swift
+// SudokuGridView.swift:27-29
+.onTapGesture {
+    viewModel.selectCell(row: row, col: col)
+}
+```
+
+```swift
+// GameViewModel.swift:29-37 — selectCell
+func selectCell(row: Int, col: Int) {
+    if state.selectedRow == row, state.selectedCol == col {
+        state.selectedRow = nil
+        state.selectedCol = nil
+    } else {
+        state.selectedRow = row
+        state.selectedCol = col
+    }
+}
+```
+
+> **버그 원인 추정**: `SudokuGridView`에서 `ZStack`으로 `GridLinesView`가 오버레이되어 있으나 `.allowsHitTesting(false)` 처리됨. 실제 문제는 `SudokuCellView`가 `value == 0`이고 `notes`도 없으면 `ZStack` 내부에 배경(`Color.clear`)만 렌더링되어 **hit area가 없음**. `Color.clear`는 기본적으로 SwiftUI에서 탭을 받지 않음.
+
+```swift
+// SudokuCellView.swift:10-26 — 빈 셀은 backgroundColor = Color.clear → 탭 안 됨
+var body: some View {
+    ZStack {
+        backgroundColor   // isSelected/isConflict/isRelated 아니면 Color.clear
+        if cell.value != 0 { ... }
+        else if !cell.notes.isEmpty { NoteGridView(...) }
+        // value==0, notes==[] → ZStack 안에 Color.clear만 존재
+    }
+    .aspectRatio(1, contentMode: .fit)
+}
+```
+
+**수정 포인트**: `backgroundColor` 대신 `.contentShape(Rectangle())`을 추가하거나, `Color.clear` 대신 `Color.clear.contentShape(Rectangle())`을 사용해 hit test 영역을 확보해야 함.
+
+---
+
+#### UI 변경 관련 핵심 인터페이스
+
+```swift
+// SudokuCellView.swift — 공개 인터페이스
+struct SudokuCellView: View {
+    let cell: SudokuCell      // value, isFixed, notes, isConflict
+    let isSelected: Bool
+    let isRelated: Bool
+}
+
+// SudokuGridView.swift — 공개 인터페이스
+struct SudokuGridView: View {
+    @State var viewModel: GameViewModel
+    // GridLinesView(gridSize:) — private, Canvas 기반 경계선
+}
+
+// NumberPadView.swift — 공개 인터페이스
+struct NumberPadView: View {
+    @Bindable var viewModel: GameViewModel
+    // 3열 LazyVGrid, 버튼 height: 52, cornerRadius: 10
+}
+```
+
+=== SubTask #1: SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선 (maxTurns: 15) ===
+
+
+=== SubTask #1: SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선 (maxTurns: 15) ===
+[Prompt Full]
+아래 Feature의 SubTask 1개를 집중 구현하세요.
+
+## 프로젝트 메모리
+# Project State
+> 갱신: 2026-04-10T07:38:47Z | 총 Feature: 6개 (활성: 1, 완료: 5)
+
+## 활성 Feature
+- **버그 수정 및 UI 변경** — Develop/Inbox
+
+## 최근 완료 Feature
+- **기능 연동** — ?에서 완료
+- **홈 화면 및 게임 기록 저장** — ?에서 완료
+- **게임 플레이 화면 및 상태 관리** — ?에서 완료
+- **스도쿠 퍼즐 생성 엔진** — ?에서 완료
+- **Sdoku** — ?에서 완료
+## 프로젝트 컨텍스트
+- 프로젝트명: Sdoku
+- 한 줄 설명: 로컬에서 혼자 즐기는 스도쿠
+쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.
+- 비전: 로컬에서 혼자 즐기는 스도쿠
+쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.
+
+### 완료된 기능 (최근 5건)
+- 게임 플레이 화면 및 상태 관리: 9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 스도쿠 게임 플레이 핵심 화면 구현
+- 스도쿠 퍼즐 생성 엔진: 백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 Swift 로직 모듈. UI 의존성 없이 독립적으로 테스트 가능한 스도쿠 퍼즐 생성 엔진.
+- 홈 화면 및 게임 기록 저장: 난이도 선택 UI, CoreData 기반 게임 기록 저장, 홈 화면 통계 요약을 포함한 Sdoku 앱의 진입점 화면 및 데이터 영속성 레이어
+- 기능 연동: 독립적으로 구현된 홈·게임·퍼즐 생성 3개 모듈을 NavigationStack 기반 단일 사용자 플로우로 연결. HomeView 난이도 선택 → GameView 진입(실제 퍼즐 로드) → 완료 감지 → 기록 저장의 4개 단절 지점을 해소하여 완전한 플레이 사이클을 완성한다.
+
+> 위 프로젝트 컨텍스트의 목적과 범위를 벗어나는 작업은 하지 마세요.
+
+## 소통 레벨: Technical
+전문 용어를 자유롭게 사용하되, 필요시 간단한 설명을 덧붙여주세요.
+
+## 스테이지 가이드 (Develop)
+# Develop 단계 가이드
+
+## 목표
+Plan의 SubTask를 실제 코드로 구현한다.
+
+## 실행 프로세스
+1. 수정 대상 파일 전체 읽기 (수정 전 연관 소스 확인)
+2. 테스트 먼저 작성 (가능한 경우)
+3. 프로덕션 코드 구현
+4. 빌드 확인
+5. 테스트 실행
+
+## 코드 작성 규칙
+- UI 업데이트는 @MainActor에서
+- CheckedContinuation은 반드시 한 번만 resume
+- Task 클로저에서 [weak self] 캡처
+- 주석은 한국어로 작성
+- 요청하지 않은 리팩토링, 기능 추가 금지
+
+## 엄격 준수 사항
+- 요청하지 않은 리팩토링, 기능 추가, 코드 스타일 변경 **절대 금지**
+- 기존 코드의 의도를 최대한 유지하면서 **최소한의 변경**으로 구현
+
+## 참조 스킬: build-safety
+> 빌드 안전성을 유지하며 점진적으로 구현하는 전략
+# 빌드 안전 전략
+
+## 구현 순서 원칙
+1. Model 먼저 — 새 struct/enum/protocol 정의
+2. Service 다음 — 비즈니스 로직 구현
+3. 기존 서비스 연결 — 호출 코드 추가
+4. View 마지막 — UI 연결
+
+## 안전한 제거 순서 (리팩토링/삭제 시)
+1. 참조 제거 먼저 — 사용처에서 import/호출 제거
+2. 빌드 확인
+3. 파일 삭제
+
+## SubTask 분할 기준
+- 각 SubTask 완료 시점에 빌드가 성공해야 함
+- 컴파일 에러를 유발하는 중간 상태 금지
+- 의존성이 있는 변경은 같은 SubTask에 포함
+
+## 참조 스킬: swift-safety-patterns
+> 반드시 지켜야 할 Swift 안전 패턴
+# Swift 안전 패턴
+
+## Codable 역호환
+모든 Codable 모델에 새 필드 추가 시:
+```swift
+// 올바른 패턴
+self.newField = try container.decodeIfPresent(String.self, forKey: .newField) ?? "기본값"
+// 금지 — 기존 저장 데이터 로딩 실패
+self.newField = try container.decode(String.self, forKey: .newField)
+```
+
+## @MainActor 격리
+UI 상태를 변경하는 코드는 반드시 @MainActor에서 실행.
+
+## Task에서 weak self
+```swift
+Task { [weak self] in
+    guard let self else { return }
+    await self.performWork()
+}
+```
+
+## CheckedContinuation
+반드시 모든 경로에서 한 번만 resume.
+
+## features 배열 인덱스
+firstIndex로 얻은 idx는 짧은 범위에서만 사용. 장기 보관 금지.
+
+## 참조 스킬: testing-conventions
+> 테스트 작성 규칙 — Swift Testing 프레임워크
+# 테스트 작성 규칙
+
+## 프레임워크
+```swift
+import Testing
+@testable import AutoAI
+
+@Suite("FeatureName Tests")
+@MainActor
+struct FeatureNameTests {
+    @Test func someTest() {
+        #expect(result == expected)
+    }
+}
+```
+
+## AppState 테스트 패턴
+- AppState를 반드시 변수로 유지 (weak var 참조 해제 방지)
+- 테스트마다 새 인스턴스 생성 (상태 오염 방지)
+- projectPath = "" → 파일 I/O 비활성화
+
+## 금지 사항
+- projectPath = ""에서 deleteFeature 호출 기대 금지
+- saveFeature() 후 즉시 디스크 검증 금지 (비동기 저장)
+- LifecycleTaskRunner 테스트에 @MainActor 누락 금지
+## 코드베이스 사전 분석
+> 파일 탐색을 최소화하고 구현에 집중하세요.
+
+### 파일 구조
+Sdoku/Sdoku/
+├── Views/
+│   ├── GameView.swift                          # 메인 게임 화면 (그리드 + 컨트롤 + 숫자패드 조합)
+│   └── Components/
+│       ├── SudokuCellView.swift                # [수정 대상] 단일 셀 렌더링
+│       ├── SudokuGridView.swift                # [수정 대상] 9x9 그리드 + 탭 이벤트
+│       ├── NumberPadView.swift                 # [수정 대상] 숫자 입력 패드 (1~9 + 지우기)
+│       └── GameControlsView.swift              # 게임 컨트롤 (언두, 펜슬 모드 등)
+├── ViewModels/
+│   └── GameViewModel.swift                     # 게임 상태 관리 (@Observable)
+├── Models/
+│   ├── SudokuCell.swift                        # 셀 데이터 모델
+│   ├── SudokuBoard.swift                       # 9x9 보드 모델
+│   └── GameState.swift                         # 선택 상태, Undo 스택 포함
+
+---
+
+### 핵심 의존 관계
+GameView
+  └── @State GameViewModel
+        ├── SudokuGridView(@State viewModel)  ──→  selectCell(row:col:)
+        │     └── SudokuCellView(cell, isSelected, isRelated)
+        │           └── NoteGridView(notes)   [private]
+        ├── GameControlsView(@Bindable viewModel)
+        └── NumberPadView(@Bindable viewModel)
+              ├── viewModel.inputNumber(_:)
+              └── viewModel.clearCell()
+
+GameViewModel (@Observable)
+  ├── board: SudokuBoard        → cells[row][col]: SudokuCell
+  ├── selectedRow: Int?
+  ├── selectedCol: Int?
+  ├── isPencilMode: Bool
+  └── canUndo: Bool
+
+SudokuCell
+  ├── value: Int       (0 = 빈칸)
+  ├── isFixed: Bool
+  ├── notes: Set<Int>
+  └── isConflict: Bool
+
+---
+
+### 관련 코드 스니펫
+#### 버그 원인: 빈 셀 선택 안 되는 문제
+
+**`NumberPadView.swift:9-12`** — `isDisabled` 조건이 선택 없을 때 `false` 반환하여 정상처럼 보이나, 실제 버그는 `SudokuGridView`의 탭 동작에 있지 않음
+
+**`GameViewModel.swift:29-37`** — `selectCell` 로직: 이미 선택된 셀을 탭하면 선택 해제 (정상). 문제는 `NumberPadView`의 `isDisabled`가 **선택이 없을 때** `false`를 반환해, 숫자 버튼을 탭하면 `inputNumber` → `guard let row = state.selectedRow` 실패 → 아무것도 안 일어남. 하지만 실제 **빈 셀 선택** 버그는 다른 곳:
+
+// SudokuGridView.swift:27-29
+.onTapGesture {
+    viewModel.selectCell(row: row, col: col)
+}
+
+// GameViewModel.swift:29-37 — selectCell
+func selectCell(row: Int, col: Int) {
+    if state.selectedRow == row, state.selectedCol == col {
+        state.selectedRow = nil
+        state.selectedCol = nil
+    } else {
+        state.selectedRow = row
+        state.selectedCol = col
+    }
+}
+
+> **버그 원인 추정**: `SudokuGridView`에서 `ZStack`으로 `GridLinesView`가 오버레이되어 있으나 `.allowsHitTesting(false)` 처리됨. 실제 문제는 `SudokuCellView`가 `value == 0`이고 `notes`도 없으면 `ZStack` 내부에 배경(`Color.clear`)만 렌더링되어 **hit area가 없음**. `Color.clear`는 기본적으로 SwiftUI에서 탭을 받지 않음.
+
+// SudokuCellView.swift:10-26 — 빈 셀은 backgroundColor = Color.clear → 탭 안 됨
+var body: some View {
+    ZStack {
+        backgroundColor   // isSelected/isConflict/isRelated 아니면 Color.clear
+        if cell.value != 0 { ... }
+        else if !cell.notes.isEmpty { NoteGridView(...) }
+        // value==0, notes==[] → ZStack 안에 Color.clear만 존재
+    }
+    .aspectRatio(1, contentMode: .fit)
+}
+
+**수정 포인트**: `backgroundColor` 대신 `.contentShape(Rectangle())`을 추가하거나, `Color.clear` 대신 `Color.clear.contentShape(Rectangle())`을 사용해 hit test 영역을 확보해야 함.
+
+---
+
+#### UI 변경 관련 핵심 인터페이스
+
+// SudokuCellView.swift — 공개 인터페이스
+struct SudokuCellView: View {
+    let cell: SudokuCell      // value, isFixed, notes, isConflict
+    let isSelected: Bool
+    let isRelated: Bool
+}
+
+// SudokuGridView.swift — 공개 인터페이스
+struct SudokuGridView: View {
+    @State var viewModel: GameViewModel
+    // GridLinesView(gridSize:) — private, Canvas 기반 경계선
+}
+
+// NumberPadView.swift — 공개 인터페이스
+struct NumberPadView: View {
+    @Bindable var viewModel: GameViewModel
+    // 3열 LazyVGrid, 버튼 height: 52, cornerRadius: 10
+}
+
+## 이전 단계 컨텍스트
+# 📋 Feature 핵심 정보 추출
+
+## 기능 요약
+빈 셀 탭 불가 버그(SwiftUI hit-testing 이슈)를 수정하고, 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선하는 품질 향상 작업
+
+## 핵심 요구사항
+1. **빈 셀 탭 버그 수정**: SudokuCellView ZStack에 `.contentShape(Rectangle())` 추가 → value=0이고 notes 비어있는 투명 배경 셀도 탭 가능
+2. **선택 셀 색상 개선**: Color.blue.opacity(0.35) → Sudoku.com 스타일(더 선명한 파란색 계열)로 변경
+3. **동일 숫자 하이라이트**: SudokuCellView에 `isSameNumber: Bool` 파라미터 추가 → 선택된 셀과 동일한 숫자 셀에 별도 배경색 표시
+4. **동일 숫자 계산 로직**: SudokuGridView에서 선택 셀의 value 읽어 각 셀의 isSameNumber 여부 계산 후 전달
+5. **NumberPadView 스타일링**: 버튼 배경색, 모서리, 폰트 등 Sudoku.com 스타일에 맞게 조정
+
+## 아키텍처 결정사항
+- **데이터 모델**: isSameNumber는 SudokuCellView 파라미터로만 추가 (SudokuCell 모델 구조체 무변경)
+- **상태 관리**: 별도 저장 상태 없음 → GameViewModel.board.cells[selectedRow][selectedCol].value에서 파생 계산
+- **영향 범위**: 순수 뷰 레이어만 변경, GameViewModel 로직 무변경
+
+## 구현 계획 (SubTask)
+1. **SudokuCellView**: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선
+2. **SudokuGridView**: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트
+3. **NumberPadView**: Sudoku.com 스타일 버튼 UI 개선
+
+## 제약 조건 & 제외 범위
+
+### 제외 범위
+- 홈 화면(HomeView) 리디자인
+- 게임 완료/기록/통계 화면 변경
+- 셀 선택·입력 애니메이션
+- 힌트·타이머 기능 변경
+- SudokuCell·SudokuBoard 모델 변경
+- GameViewModel 내 로직 변경
+
+### 리스크 & 주의사항
+- **컴파일 순서**: SubTask 0(SudokuCellView) 완료 후 SubTask 1(SudokuGridView) 진행 필수
+- **색상 우선순위**: isSelected > isSameNumber > isConflict 순서 유지 (isConflict가 숨겨지면 안 됨)
+
+### 영향 파일 (3개만)
+- `Sdoku/Views/Components/SudokuCellView.swift`
+- `Sdoku/Views/Components/SudokuGridView.swift`
+- `Sdoku/Views/Components/NumberPadView.swift`
+
+---
+
+**예상 소요**: 45분 | **우선순위**: Medium
+
+## Feature
+제목: 버그 수정 및 UI 변경
+설명: 버그 수정
+- 빈공간 선택 이 되지 않음(숫자 선택 후 선택하면 동작)
+
+UI 변경
+- 첨부한 이미지 형태의 비슷한 디자인으로 변경 요청
+
+## 진행 현황 (1/3)
+### 이전 완료된 SubTask
+없음 (첫 번째 SubTask)
+
+## 현재 구현할 SubTask
+제목: SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선
+설명: 1) ZStack에 .contentShape(Rectangle()) 수정자를 추가하여 value=0이고 notes가 비어있는 투명 배경 빈 셀도 hit-testing 영역이 확보되도록 수정. 2) isSameNumber: Bool 파라미터를 구조체에 추가. 3) backgroundColor 계산 우선순위를 isSelected > isSameNumber > isConflict > isRelated 순으로 재정렬하고, 선택 셀 배경색을 Color.blue.opacity(0.35)에서 더 선명한 Sudoku.com 스타일(예: Color(red:0.18,green:0.45,blue:0.85).opacity(0.50))로 변경, isSameNumber 배경색은 Color.blue.opacity(0.18) 수준의 연한 파란색 적용. 4) Preview에 isSameNumber=true 케이스 추가.
+수정 파일: Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+## 역할 경계
+✅ 해야 할 것:
+- 이 SubTask만 집중해서 완전히 구현
+- 실제 Swift/SwiftUI 코드 작성
+- 기존 코드 패턴과 일관성 유지
+- 이전 SubTask에서 생성/수정된 파일이 파일시스템에 이미 존재함
+- 사전 분석 결과를 참고하여 파일 탐색을 최소화하고 구현에 집중
+- 빌드 검증은 다음 단계(Verify)에서 수행되므로, 구현 자체에 집중
+
+❌ 하면 안 되는 것:
+- 다른 SubTask 범위의 파일 수정
+- 코드 설명만 하고 구현하지 않기
+- 부분적 구현 후 중단
+
+## 작업 완료 후 반드시 실행
+```
+git add -A
+git commit -m "SubTask #1: SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선"
+```
+구현 완료 후 "[SubTask 1 완료]" 를 출력하세요.
+[/Prompt]
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+
+[🔧 작성 중] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+
+[🔧 명령 실행] git add Sdoku/Sdoku/Views/Components/SudokuCellView.swift && git commit -m "SubTask #1: SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선"
+SourceKit 에러는 IDE의 인덱싱 문제로, SudokuCellView.swift가 SudokuCell 모델과 같은 모듈에 있어 실제 빌드에서는 문제없습니다. `SudokuGridView.swift`에서 `isSameNumber` 파라미터를 추가하지 않으면 빌드 에러가 발생하나, 그건 다음 SubTask 범위입니다.
+
+[SubTask 1 완료]
+
+**변경 사항 요약:**
+- `.contentShape(Rectangle())` 추가 → 빈 셀(`Color.clear`) hit-testing 영역 확보
+- `isSameNumber: Bool` 파라미터 추가
+- `backgroundColor` 우선순위 재정렬: `isSelected` > `isSameNumber` > `isConflict` > `isRelated`
+- 선택 셀 색상: `Color(red:0.18,green:0.45,blue:0.85).opacity(0.50)` (Sudoku.com 스타일)
+- 동일 숫자 색상: `Color.blue.opacity(0.18)` (연한 파란색)
+- Preview에 `isSameNumber=true` 케이스 및 빈 셀 케이스 추가
+[SubTask #1 완료] Tokens: 2.0K (in: 6, out: 2.0K, cache: 84.4K) | Cost: <$0.001 | Turns: 4
+
+[SubTask #1 완료] Tokens: 2.0K (in: 6, out: 2.0K, cache: 84.4K) | Cost: <$0.001 | Turns: 4
+
+
+=== SubTask #2: SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트 (maxTurns: 15) ===
+
+
+=== SubTask #2: SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트 (maxTurns: 15) ===
+[Prompt Full]
+아래 Feature의 SubTask 1개를 집중 구현하세요.
+
+## 프로젝트 메모리
+# Project State
+> 갱신: 2026-04-10T07:38:47Z | 총 Feature: 6개 (활성: 1, 완료: 5)
+
+## 활성 Feature
+- **버그 수정 및 UI 변경** — Develop/Inbox
+
+## 최근 완료 Feature
+- **기능 연동** — ?에서 완료
+- **홈 화면 및 게임 기록 저장** — ?에서 완료
+- **게임 플레이 화면 및 상태 관리** — ?에서 완료
+- **스도쿠 퍼즐 생성 엔진** — ?에서 완료
+- **Sdoku** — ?에서 완료
+## 프로젝트 컨텍스트
+- 프로젝트명: Sdoku
+- 한 줄 설명: 로컬에서 혼자 즐기는 스도쿠
+쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.
+- 비전: 로컬에서 혼자 즐기는 스도쿠
+쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.
+
+### 완료된 기능 (최근 5건)
+- 게임 플레이 화면 및 상태 관리: 9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 스도쿠 게임 플레이 핵심 화면 구현
+- 스도쿠 퍼즐 생성 엔진: 백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 Swift 로직 모듈. UI 의존성 없이 독립적으로 테스트 가능한 스도쿠 퍼즐 생성 엔진.
+- 홈 화면 및 게임 기록 저장: 난이도 선택 UI, CoreData 기반 게임 기록 저장, 홈 화면 통계 요약을 포함한 Sdoku 앱의 진입점 화면 및 데이터 영속성 레이어
+- 기능 연동: 독립적으로 구현된 홈·게임·퍼즐 생성 3개 모듈을 NavigationStack 기반 단일 사용자 플로우로 연결. HomeView 난이도 선택 → GameView 진입(실제 퍼즐 로드) → 완료 감지 → 기록 저장의 4개 단절 지점을 해소하여 완전한 플레이 사이클을 완성한다.
+
+> 위 프로젝트 컨텍스트의 목적과 범위를 벗어나는 작업은 하지 마세요.
+
+## 소통 레벨: Technical
+전문 용어를 자유롭게 사용하되, 필요시 간단한 설명을 덧붙여주세요.
+
+## 스테이지 가이드 (Develop)
+# Develop 단계 가이드
+
+## 목표
+Plan의 SubTask를 실제 코드로 구현한다.
+
+## 실행 프로세스
+1. 수정 대상 파일 전체 읽기 (수정 전 연관 소스 확인)
+2. 테스트 먼저 작성 (가능한 경우)
+3. 프로덕션 코드 구현
+4. 빌드 확인
+5. 테스트 실행
+
+## 코드 작성 규칙
+- UI 업데이트는 @MainActor에서
+- CheckedContinuation은 반드시 한 번만 resume
+- Task 클로저에서 [weak self] 캡처
+- 주석은 한국어로 작성
+- 요청하지 않은 리팩토링, 기능 추가 금지
+
+## 엄격 준수 사항
+- 요청하지 않은 리팩토링, 기능 추가, 코드 스타일 변경 **절대 금지**
+- 기존 코드의 의도를 최대한 유지하면서 **최소한의 변경**으로 구현
+
+## 참조 스킬: build-safety
+> 빌드 안전성을 유지하며 점진적으로 구현하는 전략
+# 빌드 안전 전략
+
+## 구현 순서 원칙
+1. Model 먼저 — 새 struct/enum/protocol 정의
+2. Service 다음 — 비즈니스 로직 구현
+3. 기존 서비스 연결 — 호출 코드 추가
+4. View 마지막 — UI 연결
+
+## 안전한 제거 순서 (리팩토링/삭제 시)
+1. 참조 제거 먼저 — 사용처에서 import/호출 제거
+2. 빌드 확인
+3. 파일 삭제
+
+## SubTask 분할 기준
+- 각 SubTask 완료 시점에 빌드가 성공해야 함
+- 컴파일 에러를 유발하는 중간 상태 금지
+- 의존성이 있는 변경은 같은 SubTask에 포함
+
+## 참조 스킬: swift-safety-patterns
+> 반드시 지켜야 할 Swift 안전 패턴
+# Swift 안전 패턴
+
+## Codable 역호환
+모든 Codable 모델에 새 필드 추가 시:
+```swift
+// 올바른 패턴
+self.newField = try container.decodeIfPresent(String.self, forKey: .newField) ?? "기본값"
+// 금지 — 기존 저장 데이터 로딩 실패
+self.newField = try container.decode(String.self, forKey: .newField)
+```
+
+## @MainActor 격리
+UI 상태를 변경하는 코드는 반드시 @MainActor에서 실행.
+
+## Task에서 weak self
+```swift
+Task { [weak self] in
+    guard let self else { return }
+    await self.performWork()
+}
+```
+
+## CheckedContinuation
+반드시 모든 경로에서 한 번만 resume.
+
+## features 배열 인덱스
+firstIndex로 얻은 idx는 짧은 범위에서만 사용. 장기 보관 금지.
+
+## 참조 스킬: testing-conventions
+> 테스트 작성 규칙 — Swift Testing 프레임워크
+# 테스트 작성 규칙
+
+## 프레임워크
+```swift
+import Testing
+@testable import AutoAI
+
+@Suite("FeatureName Tests")
+@MainActor
+struct FeatureNameTests {
+    @Test func someTest() {
+        #expect(result == expected)
+    }
+}
+```
+
+## AppState 테스트 패턴
+- AppState를 반드시 변수로 유지 (weak var 참조 해제 방지)
+- 테스트마다 새 인스턴스 생성 (상태 오염 방지)
+- projectPath = "" → 파일 I/O 비활성화
+
+## 금지 사항
+- projectPath = ""에서 deleteFeature 호출 기대 금지
+- saveFeature() 후 즉시 디스크 검증 금지 (비동기 저장)
+- LifecycleTaskRunner 테스트에 @MainActor 누락 금지
+## 코드베이스 사전 분석
+> 파일 탐색을 최소화하고 구현에 집중하세요.
+
+### 파일 구조
+Sdoku/Sdoku/
+├── Views/
+│   ├── GameView.swift                          # 메인 게임 화면 (그리드 + 컨트롤 + 숫자패드 조합)
+│   └── Components/
+│       ├── SudokuCellView.swift                # [수정 대상] 단일 셀 렌더링
+│       ├── SudokuGridView.swift                # [수정 대상] 9x9 그리드 + 탭 이벤트
+│       ├── NumberPadView.swift                 # [수정 대상] 숫자 입력 패드 (1~9 + 지우기)
+│       └── GameControlsView.swift              # 게임 컨트롤 (언두, 펜슬 모드 등)
+├── ViewModels/
+│   └── GameViewModel.swift                     # 게임 상태 관리 (@Observable)
+├── Models/
+│   ├── SudokuCell.swift                        # 셀 데이터 모델
+│   ├── SudokuBoard.swift                       # 9x9 보드 모델
+│   └── GameState.swift                         # 선택 상태, Undo 스택 포함
+
+---
+
+### 핵심 의존 관계
+GameView
+  └── @State GameViewModel
+        ├── SudokuGridView(@State viewModel)  ──→  selectCell(row:col:)
+        │     └── SudokuCellView(cell, isSelected, isRelated)
+        │           └── NoteGridView(notes)   [private]
+        ├── GameControlsView(@Bindable viewModel)
+        └── NumberPadView(@Bindable viewModel)
+              ├── viewModel.inputNumber(_:)
+              └── viewModel.clearCell()
+
+GameViewModel (@Observable)
+  ├── board: SudokuBoard        → cells[row][col]: SudokuCell
+  ├── selectedRow: Int?
+  ├── selectedCol: Int?
+  ├── isPencilMode: Bool
+  └── canUndo: Bool
+
+SudokuCell
+  ├── value: Int       (0 = 빈칸)
+  ├── isFixed: Bool
+  ├── notes: Set<Int>
+  └── isConflict: Bool
+
+---
+
+### 관련 코드 스니펫
+#### 버그 원인: 빈 셀 선택 안 되는 문제
+
+**`NumberPadView.swift:9-12`** — `isDisabled` 조건이 선택 없을 때 `false` 반환하여 정상처럼 보이나, 실제 버그는 `SudokuGridView`의 탭 동작에 있지 않음
+
+**`GameViewModel.swift:29-37`** — `selectCell` 로직: 이미 선택된 셀을 탭하면 선택 해제 (정상). 문제는 `NumberPadView`의 `isDisabled`가 **선택이 없을 때** `false`를 반환해, 숫자 버튼을 탭하면 `inputNumber` → `guard let row = state.selectedRow` 실패 → 아무것도 안 일어남. 하지만 실제 **빈 셀 선택** 버그는 다른 곳:
+
+// SudokuGridView.swift:27-29
+.onTapGesture {
+    viewModel.selectCell(row: row, col: col)
+}
+
+// GameViewModel.swift:29-37 — selectCell
+func selectCell(row: Int, col: Int) {
+    if state.selectedRow == row, state.selectedCol == col {
+        state.selectedRow = nil
+        state.selectedCol = nil
+    } else {
+        state.selectedRow = row
+        state.selectedCol = col
+    }
+}
+
+> **버그 원인 추정**: `SudokuGridView`에서 `ZStack`으로 `GridLinesView`가 오버레이되어 있으나 `.allowsHitTesting(false)` 처리됨. 실제 문제는 `SudokuCellView`가 `value == 0`이고 `notes`도 없으면 `ZStack` 내부에 배경(`Color.clear`)만 렌더링되어 **hit area가 없음**. `Color.clear`는 기본적으로 SwiftUI에서 탭을 받지 않음.
+
+// SudokuCellView.swift:10-26 — 빈 셀은 backgroundColor = Color.clear → 탭 안 됨
+var body: some View {
+    ZStack {
+        backgroundColor   // isSelected/isConflict/isRelated 아니면 Color.clear
+        if cell.value != 0 { ... }
+        else if !cell.notes.isEmpty { NoteGridView(...) }
+        // value==0, notes==[] → ZStack 안에 Color.clear만 존재
+    }
+    .aspectRatio(1, contentMode: .fit)
+}
+
+**수정 포인트**: `backgroundColor` 대신 `.contentShape(Rectangle())`을 추가하거나, `Color.clear` 대신 `Color.clear.contentShape(Rectangle())`을 사용해 hit test 영역을 확보해야 함.
+
+---
+
+#### UI 변경 관련 핵심 인터페이스
+
+// SudokuCellView.swift — 공개 인터페이스
+struct SudokuCellView: View {
+    let cell: SudokuCell      // value, isFixed, notes, isConflict
+    let isSelected: Bool
+    let isRelated: Bool
+}
+
+// SudokuGridView.swift — 공개 인터페이스
+struct SudokuGridView: View {
+    @State var viewModel: GameViewModel
+    // GridLinesView(gridSize:) — private, Canvas 기반 경계선
+}
+
+// NumberPadView.swift — 공개 인터페이스
+struct NumberPadView: View {
+    @Bindable var viewModel: GameViewModel
+    // 3열 LazyVGrid, 버튼 height: 52, cornerRadius: 10
+}
+
+### 이전 SubTask 변경 내역
+
+**SubTask #1: SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선**
+수정 파일: .auto-claude/codebase-digest.md, ...0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-context.md, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE.json, .../analysis/analysis-summary.md, .../analysis/code-mapping.md, .../analysis/cross-review.md, .../analysis/feature-analysis.md, .../analysis/ui-analysis.md, .../analysis/ux-analysis.md, .../DC49968A-1FF7-4DE2-A5EA-D574CB0AA963.json, .../analysis/analysis-summary.md, .../analysis/code-mapping.md, .../analysis/cross-review.md, .../analysis/feature-analysis.md, .../analysis/ui-analysis.md, .../analysis/ux-analysis.md, .auto-claude/guidelines/pending-0F0BC055.md, ...F0BC055-8B2D-420A-BEAF-1821C96DFBEE-develop.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-plan.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-qa.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-spec.log, .auto-claude/memory/project_state.md, .auto-claude/project-brief.json, .auto-claude/project-ledger.json, .autoai/FEATURES_INDEX.md, ...27\254\353\266\200-\355\231\225\354\235\270.md", ...70\260\353\212\245-\354\227\260\353\217\231.md", ...2\245-\354\227\260\353\217\231-conversation.md", .../UserInterfaceState.xcuserstate, Sdoku/Sdoku/Difficulty.swift, Sdoku/Sdoku/Models/Difficulty.swift, Sdoku/Sdoku/SdokuApp.swift, .../Views/{ContentView.swift => GameView.swift}
+인터페이스 변경:
+// Sdoku/Sdoku/Difficulty.swift
+var removalRange: ClosedRange<Int> {
+변경 요약: .auto-claude/codebase-digest.md                    |  70 +-
+ ...0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-context.md |  87 ++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE.json      | 486 ++++++++++
+ .../analysis/analysis-summary.md                   | 174 ++++
+ .../analysis/code-mapping.md                       | 300 +++++++
+ .../analysis/cross-review.md                       | 171 ++++
+ .../analysis/feature-analysis.md                   | 423 +++++++++
+ .../analysis/ui-analysis.md                        | 251 ++++++
+ .../analysis/ux-analysis.md                        | 248 ++++++
+ .../DC49968A-1FF7-4DE2-A5EA-D574CB0AA963.json      |  67 --
+ .../analysis/analysis-summary.md                   | 186 ++++
+ .../analysis/code-mapping.md                       | 321 +++++++
+ .../analysis/cross-review.md                       | 239 +++++
+ .../analysis/feature-analysis.md                   | 485 ++++++++++
+ .../analysis/ui-analysis.md                        | 134 +++
+ .../analysis/ux-analysis.md                        | 275 ++++++
+ .auto-claude/guidelines/pending-0F0BC055.md        | 260 ++++++
+ ...F0BC055-8B2D-420A-BEAF-1821C96DFBEE-develop.log | 984 +++++++++++++++++++++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-plan.log  | 614 +++++++++++++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-qa.log    |  81 ++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-spec.log  |  82 ++
+ .auto-claude/memory/project_state.md               |   5 +-
+ .auto-claude/project-brief.json                    |  26 +-
+ .auto-claude/project-ledger.json                   | 150 +++-
+ .autoai/FEATURES_INDEX.md                          |   7 +-
+ ...27\254\353\266\200-\355\231\225\354\235\270.md" |  29 -
+ ...70\260\353\212\245-\354\227\260\353\217\231.md" | 205 +++++
+ ...2\245-\354\227\260\353\217\231-conversation.md" | 316 +++++++
+ .../UserInterfaceState.xcuserstate                 | Bin 26558 -> 29165 bytes
+ Sdoku/Sdoku/Difficulty.swift                       |  10 +
+ Sdoku/Sdoku/Models/Difficulty.swift                |  29 -
+ Sdoku/Sdoku/SdokuApp.swift                         |   2 +-
+ .../Views/{ContentView.swift => GameView.swift}    |   4 +-
+ 33 files changed, 6561 insertions(+), 160 deletions(-)
+
+
+## 이전 단계 컨텍스트
+# 📋 Feature 핵심 정보 추출
+
+## 기능 요약
+빈 셀 탭 불가 버그(SwiftUI hit-testing 이슈)를 수정하고, 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선하는 품질 향상 작업
+
+## 핵심 요구사항
+1. **빈 셀 탭 버그 수정**: SudokuCellView ZStack에 `.contentShape(Rectangle())` 추가 → value=0이고 notes 비어있는 투명 배경 셀도 탭 가능
+2. **선택 셀 색상 개선**: Color.blue.opacity(0.35) → Sudoku.com 스타일(더 선명한 파란색 계열)로 변경
+3. **동일 숫자 하이라이트**: SudokuCellView에 `isSameNumber: Bool` 파라미터 추가 → 선택된 셀과 동일한 숫자 셀에 별도 배경색 표시
+4. **동일 숫자 계산 로직**: SudokuGridView에서 선택 셀의 value 읽어 각 셀의 isSameNumber 여부 계산 후 전달
+5. **NumberPadView 스타일링**: 버튼 배경색, 모서리, 폰트 등 Sudoku.com 스타일에 맞게 조정
+
+## 아키텍처 결정사항
+- **데이터 모델**: isSameNumber는 SudokuCellView 파라미터로만 추가 (SudokuCell 모델 구조체 무변경)
+- **상태 관리**: 별도 저장 상태 없음 → GameViewModel.board.cells[selectedRow][selectedCol].value에서 파생 계산
+- **영향 범위**: 순수 뷰 레이어만 변경, GameViewModel 로직 무변경
+
+## 구현 계획 (SubTask)
+1. **SudokuCellView**: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선
+2. **SudokuGridView**: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트
+3. **NumberPadView**: Sudoku.com 스타일 버튼 UI 개선
+
+## 제약 조건 & 제외 범위
+
+### 제외 범위
+- 홈 화면(HomeView) 리디자인
+- 게임 완료/기록/통계 화면 변경
+- 셀 선택·입력 애니메이션
+- 힌트·타이머 기능 변경
+- SudokuCell·SudokuBoard 모델 변경
+- GameViewModel 내 로직 변경
+
+### 리스크 & 주의사항
+- **컴파일 순서**: SubTask 0(SudokuCellView) 완료 후 SubTask 1(SudokuGridView) 진행 필수
+- **색상 우선순위**: isSelected > isSameNumber > isConflict 순서 유지 (isConflict가 숨겨지면 안 됨)
+
+### 영향 파일 (3개만)
+- `Sdoku/Views/Components/SudokuCellView.swift`
+- `Sdoku/Views/Components/SudokuGridView.swift`
+- `Sdoku/Views/Components/NumberPadView.swift`
+
+---
+
+**예상 소요**: 45분 | **우선순위**: Medium
+
+## Feature
+제목: 버그 수정 및 UI 변경
+설명: 버그 수정
+- 빈공간 선택 이 되지 않음(숫자 선택 후 선택하면 동작)
+
+UI 변경
+- 첨부한 이미지 형태의 비슷한 디자인으로 변경 요청
+
+## 진행 현황 (2/3)
+### 이전 완료된 SubTask
+#1 SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선 — 완료 (파일: Sdoku/Sdoku/Views/Components/SudokuCellView.swift)
+
+## 현재 구현할 SubTask
+제목: SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트
+설명: private 헬퍼 함수 isSameNumber(row:col:) -> Bool를 추가. 선택 셀이 없거나 선택 셀의 value=0이면 false 반환, 그 외 해당 셀의 value가 선택 셀 value와 동일하면 true 반환(선택 셀 자체는 isSelected로 처리하므로 false). SudokuCellView 호출부에 isSameNumber: isSameNumber(row: row, col: col) 파라미터를 전달하도록 수정. SubTask 0 완료 후 실행 필수(컴파일 의존성).
+수정 파일: Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+## 역할 경계
+✅ 해야 할 것:
+- 이 SubTask만 집중해서 완전히 구현
+- 실제 Swift/SwiftUI 코드 작성
+- 기존 코드 패턴과 일관성 유지
+- 이전 SubTask에서 생성/수정된 파일이 파일시스템에 이미 존재함
+- 사전 분석 결과를 참고하여 파일 탐색을 최소화하고 구현에 집중
+- 빌드 검증은 다음 단계(Verify)에서 수행되므로, 구현 자체에 집중
+
+❌ 하면 안 되는 것:
+- 다른 SubTask 범위의 파일 수정
+- 코드 설명만 하고 구현하지 않기
+- 부분적 구현 후 중단
+
+## 작업 완료 후 반드시 실행
+```
+git add -A
+git commit -m "SubTask #2: SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트"
+```
+구현 완료 후 "[SubTask 2 완료]" 를 출력하세요.
+[/Prompt]
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+`SudokuCellView`에 `isSameNumber` 파라미터가 이미 추가되어 있음을 확인했습니다. 이제 `SudokuGridView`를 수정합니다.
+[🔧 작성 중] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+
+[🔧 작성 중] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+
+[🔧 명령 실행] git add Sdoku/Sdoku/Views/Components/SudokuGridView.swift && git commit -m "SubTask #2: SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트"
+[SubTask 2 완료]
+
+`SudokuGridView.swift`에 두 가지 변경을 적용했습니다:
+
+1. **`isSameNumber(row:col:)` 헬퍼 추가** — 선택 셀 없거나 value=0이면 false, 선택 셀 자체도 false, 그 외 동일 value면 true
+2. **`SudokuCellView` 호출부 업데이트** — `isSameNumber: isSameNumber(row: row, col: col)` 파라미터 전달
+[SubTask #2 완료] Tokens: 1.3K (in: 7, out: 1.3K, cache: 121.7K) | Cost: <$0.001 | Turns: 6
+
+[SubTask #2 완료] Tokens: 1.3K (in: 7, out: 1.3K, cache: 121.7K) | Cost: <$0.001 | Turns: 6
+
+
+=== SubTask #3: NumberPadView: Sudoku.com 스타일 버튼 UI 개선 (maxTurns: 15) ===
+
+
+=== SubTask #3: NumberPadView: Sudoku.com 스타일 버튼 UI 개선 (maxTurns: 15) ===
+[Prompt Full]
+아래 Feature의 SubTask 1개를 집중 구현하세요.
+
+## 프로젝트 메모리
+# Project State
+> 갱신: 2026-04-10T07:38:47Z | 총 Feature: 6개 (활성: 1, 완료: 5)
+
+## 활성 Feature
+- **버그 수정 및 UI 변경** — Develop/Inbox
+
+## 최근 완료 Feature
+- **기능 연동** — ?에서 완료
+- **홈 화면 및 게임 기록 저장** — ?에서 완료
+- **게임 플레이 화면 및 상태 관리** — ?에서 완료
+- **스도쿠 퍼즐 생성 엔진** — ?에서 완료
+- **Sdoku** — ?에서 완료
+## 프로젝트 컨텍스트
+- 프로젝트명: Sdoku
+- 한 줄 설명: 로컬에서 혼자 즐기는 스도쿠
+쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.
+- 비전: 로컬에서 혼자 즐기는 스도쿠
+쉬움, 보통, 어려움, 극악의 난이도를 가지고 있다.
+
+### 완료된 기능 (최근 5건)
+- 게임 플레이 화면 및 상태 관리: 9x9 그리드 UI, 숫자 패드, 메모(Pencil Mark) 토글, 실행취소(Undo) 스택, 실시간 충돌 감지를 포함하는 스도쿠 게임 플레이 핵심 화면 구현
+- 스도쿠 퍼즐 생성 엔진: 백트래킹 기반 완성 그리드 생성, 난이도별 셀 제거, 유일해 검증 알고리즘을 포함하는 순수 Swift 로직 모듈. UI 의존성 없이 독립적으로 테스트 가능한 스도쿠 퍼즐 생성 엔진.
+- 홈 화면 및 게임 기록 저장: 난이도 선택 UI, CoreData 기반 게임 기록 저장, 홈 화면 통계 요약을 포함한 Sdoku 앱의 진입점 화면 및 데이터 영속성 레이어
+- 기능 연동: 독립적으로 구현된 홈·게임·퍼즐 생성 3개 모듈을 NavigationStack 기반 단일 사용자 플로우로 연결. HomeView 난이도 선택 → GameView 진입(실제 퍼즐 로드) → 완료 감지 → 기록 저장의 4개 단절 지점을 해소하여 완전한 플레이 사이클을 완성한다.
+
+> 위 프로젝트 컨텍스트의 목적과 범위를 벗어나는 작업은 하지 마세요.
+
+## 소통 레벨: Technical
+전문 용어를 자유롭게 사용하되, 필요시 간단한 설명을 덧붙여주세요.
+
+## 스테이지 가이드 (Develop)
+# Develop 단계 가이드
+
+## 목표
+Plan의 SubTask를 실제 코드로 구현한다.
+
+## 실행 프로세스
+1. 수정 대상 파일 전체 읽기 (수정 전 연관 소스 확인)
+2. 테스트 먼저 작성 (가능한 경우)
+3. 프로덕션 코드 구현
+4. 빌드 확인
+5. 테스트 실행
+
+## 코드 작성 규칙
+- UI 업데이트는 @MainActor에서
+- CheckedContinuation은 반드시 한 번만 resume
+- Task 클로저에서 [weak self] 캡처
+- 주석은 한국어로 작성
+- 요청하지 않은 리팩토링, 기능 추가 금지
+
+## 엄격 준수 사항
+- 요청하지 않은 리팩토링, 기능 추가, 코드 스타일 변경 **절대 금지**
+- 기존 코드의 의도를 최대한 유지하면서 **최소한의 변경**으로 구현
+
+## 참조 스킬: build-safety
+> 빌드 안전성을 유지하며 점진적으로 구현하는 전략
+# 빌드 안전 전략
+
+## 구현 순서 원칙
+1. Model 먼저 — 새 struct/enum/protocol 정의
+2. Service 다음 — 비즈니스 로직 구현
+3. 기존 서비스 연결 — 호출 코드 추가
+4. View 마지막 — UI 연결
+
+## 안전한 제거 순서 (리팩토링/삭제 시)
+1. 참조 제거 먼저 — 사용처에서 import/호출 제거
+2. 빌드 확인
+3. 파일 삭제
+
+## SubTask 분할 기준
+- 각 SubTask 완료 시점에 빌드가 성공해야 함
+- 컴파일 에러를 유발하는 중간 상태 금지
+- 의존성이 있는 변경은 같은 SubTask에 포함
+
+## 참조 스킬: swift-safety-patterns
+> 반드시 지켜야 할 Swift 안전 패턴
+# Swift 안전 패턴
+
+## Codable 역호환
+모든 Codable 모델에 새 필드 추가 시:
+```swift
+// 올바른 패턴
+self.newField = try container.decodeIfPresent(String.self, forKey: .newField) ?? "기본값"
+// 금지 — 기존 저장 데이터 로딩 실패
+self.newField = try container.decode(String.self, forKey: .newField)
+```
+
+## @MainActor 격리
+UI 상태를 변경하는 코드는 반드시 @MainActor에서 실행.
+
+## Task에서 weak self
+```swift
+Task { [weak self] in
+    guard let self else { return }
+    await self.performWork()
+}
+```
+
+## CheckedContinuation
+반드시 모든 경로에서 한 번만 resume.
+
+## features 배열 인덱스
+firstIndex로 얻은 idx는 짧은 범위에서만 사용. 장기 보관 금지.
+
+## 참조 스킬: testing-conventions
+> 테스트 작성 규칙 — Swift Testing 프레임워크
+# 테스트 작성 규칙
+
+## 프레임워크
+```swift
+import Testing
+@testable import AutoAI
+
+@Suite("FeatureName Tests")
+@MainActor
+struct FeatureNameTests {
+    @Test func someTest() {
+        #expect(result == expected)
+    }
+}
+```
+
+## AppState 테스트 패턴
+- AppState를 반드시 변수로 유지 (weak var 참조 해제 방지)
+- 테스트마다 새 인스턴스 생성 (상태 오염 방지)
+- projectPath = "" → 파일 I/O 비활성화
+
+## 금지 사항
+- projectPath = ""에서 deleteFeature 호출 기대 금지
+- saveFeature() 후 즉시 디스크 검증 금지 (비동기 저장)
+- LifecycleTaskRunner 테스트에 @MainActor 누락 금지
+## 코드베이스 사전 분석
+> 파일 탐색을 최소화하고 구현에 집중하세요.
+
+### 파일 구조
+Sdoku/Sdoku/
+├── Views/
+│   ├── GameView.swift                          # 메인 게임 화면 (그리드 + 컨트롤 + 숫자패드 조합)
+│   └── Components/
+│       ├── SudokuCellView.swift                # [수정 대상] 단일 셀 렌더링
+│       ├── SudokuGridView.swift                # [수정 대상] 9x9 그리드 + 탭 이벤트
+│       ├── NumberPadView.swift                 # [수정 대상] 숫자 입력 패드 (1~9 + 지우기)
+│       └── GameControlsView.swift              # 게임 컨트롤 (언두, 펜슬 모드 등)
+├── ViewModels/
+│   └── GameViewModel.swift                     # 게임 상태 관리 (@Observable)
+├── Models/
+│   ├── SudokuCell.swift                        # 셀 데이터 모델
+│   ├── SudokuBoard.swift                       # 9x9 보드 모델
+│   └── GameState.swift                         # 선택 상태, Undo 스택 포함
+
+---
+
+### 핵심 의존 관계
+GameView
+  └── @State GameViewModel
+        ├── SudokuGridView(@State viewModel)  ──→  selectCell(row:col:)
+        │     └── SudokuCellView(cell, isSelected, isRelated)
+        │           └── NoteGridView(notes)   [private]
+        ├── GameControlsView(@Bindable viewModel)
+        └── NumberPadView(@Bindable viewModel)
+              ├── viewModel.inputNumber(_:)
+              └── viewModel.clearCell()
+
+GameViewModel (@Observable)
+  ├── board: SudokuBoard        → cells[row][col]: SudokuCell
+  ├── selectedRow: Int?
+  ├── selectedCol: Int?
+  ├── isPencilMode: Bool
+  └── canUndo: Bool
+
+SudokuCell
+  ├── value: Int       (0 = 빈칸)
+  ├── isFixed: Bool
+  ├── notes: Set<Int>
+  └── isConflict: Bool
+
+---
+
+### 관련 코드 스니펫
+#### 버그 원인: 빈 셀 선택 안 되는 문제
+
+**`NumberPadView.swift:9-12`** — `isDisabled` 조건이 선택 없을 때 `false` 반환하여 정상처럼 보이나, 실제 버그는 `SudokuGridView`의 탭 동작에 있지 않음
+
+**`GameViewModel.swift:29-37`** — `selectCell` 로직: 이미 선택된 셀을 탭하면 선택 해제 (정상). 문제는 `NumberPadView`의 `isDisabled`가 **선택이 없을 때** `false`를 반환해, 숫자 버튼을 탭하면 `inputNumber` → `guard let row = state.selectedRow` 실패 → 아무것도 안 일어남. 하지만 실제 **빈 셀 선택** 버그는 다른 곳:
+
+// SudokuGridView.swift:27-29
+.onTapGesture {
+    viewModel.selectCell(row: row, col: col)
+}
+
+// GameViewModel.swift:29-37 — selectCell
+func selectCell(row: Int, col: Int) {
+    if state.selectedRow == row, state.selectedCol == col {
+        state.selectedRow = nil
+        state.selectedCol = nil
+    } else {
+        state.selectedRow = row
+        state.selectedCol = col
+    }
+}
+
+> **버그 원인 추정**: `SudokuGridView`에서 `ZStack`으로 `GridLinesView`가 오버레이되어 있으나 `.allowsHitTesting(false)` 처리됨. 실제 문제는 `SudokuCellView`가 `value == 0`이고 `notes`도 없으면 `ZStack` 내부에 배경(`Color.clear`)만 렌더링되어 **hit area가 없음**. `Color.clear`는 기본적으로 SwiftUI에서 탭을 받지 않음.
+
+// SudokuCellView.swift:10-26 — 빈 셀은 backgroundColor = Color.clear → 탭 안 됨
+var body: some View {
+    ZStack {
+        backgroundColor   // isSelected/isConflict/isRelated 아니면 Color.clear
+        if cell.value != 0 { ... }
+        else if !cell.notes.isEmpty { NoteGridView(...) }
+        // value==0, notes==[] → ZStack 안에 Color.clear만 존재
+    }
+    .aspectRatio(1, contentMode: .fit)
+}
+
+**수정 포인트**: `backgroundColor` 대신 `.contentShape(Rectangle())`을 추가하거나, `Color.clear` 대신 `Color.clear.contentShape(Rectangle())`을 사용해 hit test 영역을 확보해야 함.
+
+---
+
+#### UI 변경 관련 핵심 인터페이스
+
+// SudokuCellView.swift — 공개 인터페이스
+struct SudokuCellView: View {
+    let cell: SudokuCell      // value, isFixed, notes, isConflict
+    let isSelected: Bool
+    let isRelated: Bool
+}
+
+// SudokuGridView.swift — 공개 인터페이스
+struct SudokuGridView: View {
+    @State var viewModel: GameViewModel
+    // GridLinesView(gridSize:) — private, Canvas 기반 경계선
+}
+
+// NumberPadView.swift — 공개 인터페이스
+struct NumberPadView: View {
+    @Bindable var viewModel: GameViewModel
+    // 3열 LazyVGrid, 버튼 height: 52, cornerRadius: 10
+}
+
+### 이전 SubTask 변경 내역
+
+**SubTask #1: SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선**
+수정 파일: .auto-claude/codebase-digest.md, ...0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-context.md, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE.json, .../analysis/analysis-summary.md, .../analysis/code-mapping.md, .../analysis/cross-review.md, .../analysis/feature-analysis.md, .../analysis/ui-analysis.md, .../analysis/ux-analysis.md, .../DC49968A-1FF7-4DE2-A5EA-D574CB0AA963.json, .../analysis/analysis-summary.md, .../analysis/code-mapping.md, .../analysis/cross-review.md, .../analysis/feature-analysis.md, .../analysis/ui-analysis.md, .../analysis/ux-analysis.md, .auto-claude/guidelines/pending-0F0BC055.md, ...F0BC055-8B2D-420A-BEAF-1821C96DFBEE-develop.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-plan.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-qa.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-spec.log, .auto-claude/memory/project_state.md, .auto-claude/project-brief.json, .auto-claude/project-ledger.json, .autoai/FEATURES_INDEX.md, ...27\254\353\266\200-\355\231\225\354\235\270.md", ...70\260\353\212\245-\354\227\260\353\217\231.md", ...2\245-\354\227\260\353\217\231-conversation.md", .../UserInterfaceState.xcuserstate, Sdoku/Sdoku/Difficulty.swift, Sdoku/Sdoku/Models/Difficulty.swift, Sdoku/Sdoku/SdokuApp.swift, .../Views/{ContentView.swift => GameView.swift}
+인터페이스 변경:
+// Sdoku/Sdoku/Difficulty.swift
+var removalRange: ClosedRange<Int> {
+변경 요약: .auto-claude/codebase-digest.md                    |  70 +-
+ ...0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-context.md |  87 ++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE.json      | 486 ++++++++++
+ .../analysis/analysis-summary.md                   | 174 ++++
+ .../analysis/code-mapping.md                       | 300 +++++++
+ .../analysis/cross-review.md                       | 171 ++++
+ .../analysis/feature-analysis.md                   | 423 +++++++++
+ .../analysis/ui-analysis.md                        | 251 ++++++
+ .../analysis/ux-analysis.md                        | 248 ++++++
+ .../DC49968A-1FF7-4DE2-A5EA-D574CB0AA963.json      |  67 --
+ .../analysis/analysis-summary.md                   | 186 ++++
+ .../analysis/code-mapping.md                       | 321 +++++++
+ .../analysis/cross-review.md                       | 239 +++++
+ .../analysis/feature-analysis.md                   | 485 ++++++++++
+ .../analysis/ui-analysis.md                        | 134 +++
+ .../analysis/ux-analysis.md                        | 275 ++++++
+ .auto-claude/guidelines/pending-0F0BC055.md        | 260 ++++++
+ ...F0BC055-8B2D-420A-BEAF-1821C96DFBEE-develop.log | 984 +++++++++++++++++++++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-plan.log  | 614 +++++++++++++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-qa.log    |  81 ++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-spec.log  |  82 ++
+ .auto-claude/memory/project_state.md               |   5 +-
+ .auto-claude/project-brief.json                    |  26 +-
+ .auto-claude/project-ledger.json                   | 150 +++-
+ .autoai/FEATURES_INDEX.md                          |   7 +-
+ ...27\254\353\266\200-\355\231\225\354\235\270.md" |  29 -
+ ...70\260\353\212\245-\354\227\260\353\217\231.md" | 205 +++++
+ ...2\245-\354\227\260\353\217\231-conversation.md" | 316 +++++++
+ .../UserInterfaceState.xcuserstate                 | Bin 26558 -> 29165 bytes
+ Sdoku/Sdoku/Difficulty.swift                       |  10 +
+ Sdoku/Sdoku/Models/Difficulty.swift                |  29 -
+ Sdoku/Sdoku/SdokuApp.swift                         |   2 +-
+ .../Views/{ContentView.swift => GameView.swift}    |   4 +-
+ 33 files changed, 6561 insertions(+), 160 deletions(-)
+
+**SubTask #2: SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트**
+수정 파일: .auto-claude/codebase-digest.md, ...0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-context.md, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE.json, .../analysis/analysis-summary.md, .../analysis/code-mapping.md, .../analysis/cross-review.md, .../analysis/feature-analysis.md, .../analysis/ui-analysis.md, .../analysis/ux-analysis.md, .../DC49968A-1FF7-4DE2-A5EA-D574CB0AA963.json, .../analysis/analysis-summary.md, .../analysis/code-mapping.md, .../analysis/cross-review.md, .../analysis/feature-analysis.md, .../analysis/ui-analysis.md, .../analysis/ux-analysis.md, .auto-claude/guidelines/pending-0F0BC055.md, ...F0BC055-8B2D-420A-BEAF-1821C96DFBEE-develop.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-plan.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-qa.log, .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-spec.log, .auto-claude/memory/project_state.md, .auto-claude/project-brief.json, .auto-claude/project-ledger.json, .autoai/FEATURES_INDEX.md, ...27\254\353\266\200-\355\231\225\354\235\270.md", ...70\260\353\212\245-\354\227\260\353\217\231.md", ...2\245-\354\227\260\353\217\231-conversation.md", .../UserInterfaceState.xcuserstate, Sdoku/Sdoku/Difficulty.swift, Sdoku/Sdoku/Models/Difficulty.swift, Sdoku/Sdoku/SdokuApp.swift, .../Views/{ContentView.swift => GameView.swift}
+인터페이스 변경:
+// Sdoku/Sdoku/Difficulty.swift
+var removalRange: ClosedRange<Int> {
+변경 요약: .auto-claude/codebase-digest.md                    |  70 +-
+ ...0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-context.md |  87 ++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE.json      | 486 ++++++++++
+ .../analysis/analysis-summary.md                   | 174 ++++
+ .../analysis/code-mapping.md                       | 300 +++++++
+ .../analysis/cross-review.md                       | 171 ++++
+ .../analysis/feature-analysis.md                   | 423 +++++++++
+ .../analysis/ui-analysis.md                        | 251 ++++++
+ .../analysis/ux-analysis.md                        | 248 ++++++
+ .../DC49968A-1FF7-4DE2-A5EA-D574CB0AA963.json      |  67 --
+ .../analysis/analysis-summary.md                   | 186 ++++
+ .../analysis/code-mapping.md                       | 321 +++++++
+ .../analysis/cross-review.md                       | 239 +++++
+ .../analysis/feature-analysis.md                   | 485 ++++++++++
+ .../analysis/ui-analysis.md                        | 134 +++
+ .../analysis/ux-analysis.md                        | 275 ++++++
+ .auto-claude/guidelines/pending-0F0BC055.md        | 260 ++++++
+ ...F0BC055-8B2D-420A-BEAF-1821C96DFBEE-develop.log | 984 +++++++++++++++++++++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-plan.log  | 614 +++++++++++++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-qa.log    |  81 ++
+ .../0F0BC055-8B2D-420A-BEAF-1821C96DFBEE-spec.log  |  82 ++
+ .auto-claude/memory/project_state.md               |   5 +-
+ .auto-claude/project-brief.json                    |  26 +-
+ .auto-claude/project-ledger.json                   | 150 +++-
+ .autoai/FEATURES_INDEX.md                          |   7 +-
+ ...27\254\353\266\200-\355\231\225\354\235\270.md" |  29 -
+ ...70\260\353\212\245-\354\227\260\353\217\231.md" | 205 +++++
+ ...2\245-\354\227\260\353\217\231-conversation.md" | 316 +++++++
+ .../UserInterfaceState.xcuserstate                 | Bin 26558 -> 29165 bytes
+ Sdoku/Sdoku/Difficulty.swift                       |  10 +
+ Sdoku/Sdoku/Models/Difficulty.swift                |  29 -
+ Sdoku/Sdoku/SdokuApp.swift                         |   2 +-
+ .../Views/{ContentView.swift => GameView.swift}    |   4 +-
+ 33 files changed, 6561 insertions(+), 160 deletions(-)
+
+
+## 이전 단계 컨텍스트
+# 📋 Feature 핵심 정보 추출
+
+## 기능 요약
+빈 셀 탭 불가 버그(SwiftUI hit-testing 이슈)를 수정하고, 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선하는 품질 향상 작업
+
+## 핵심 요구사항
+1. **빈 셀 탭 버그 수정**: SudokuCellView ZStack에 `.contentShape(Rectangle())` 추가 → value=0이고 notes 비어있는 투명 배경 셀도 탭 가능
+2. **선택 셀 색상 개선**: Color.blue.opacity(0.35) → Sudoku.com 스타일(더 선명한 파란색 계열)로 변경
+3. **동일 숫자 하이라이트**: SudokuCellView에 `isSameNumber: Bool` 파라미터 추가 → 선택된 셀과 동일한 숫자 셀에 별도 배경색 표시
+4. **동일 숫자 계산 로직**: SudokuGridView에서 선택 셀의 value 읽어 각 셀의 isSameNumber 여부 계산 후 전달
+5. **NumberPadView 스타일링**: 버튼 배경색, 모서리, 폰트 등 Sudoku.com 스타일에 맞게 조정
+
+## 아키텍처 결정사항
+- **데이터 모델**: isSameNumber는 SudokuCellView 파라미터로만 추가 (SudokuCell 모델 구조체 무변경)
+- **상태 관리**: 별도 저장 상태 없음 → GameViewModel.board.cells[selectedRow][selectedCol].value에서 파생 계산
+- **영향 범위**: 순수 뷰 레이어만 변경, GameViewModel 로직 무변경
+
+## 구현 계획 (SubTask)
+1. **SudokuCellView**: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선
+2. **SudokuGridView**: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트
+3. **NumberPadView**: Sudoku.com 스타일 버튼 UI 개선
+
+## 제약 조건 & 제외 범위
+
+### 제외 범위
+- 홈 화면(HomeView) 리디자인
+- 게임 완료/기록/통계 화면 변경
+- 셀 선택·입력 애니메이션
+- 힌트·타이머 기능 변경
+- SudokuCell·SudokuBoard 모델 변경
+- GameViewModel 내 로직 변경
+
+### 리스크 & 주의사항
+- **컴파일 순서**: SubTask 0(SudokuCellView) 완료 후 SubTask 1(SudokuGridView) 진행 필수
+- **색상 우선순위**: isSelected > isSameNumber > isConflict 순서 유지 (isConflict가 숨겨지면 안 됨)
+
+### 영향 파일 (3개만)
+- `Sdoku/Views/Components/SudokuCellView.swift`
+- `Sdoku/Views/Components/SudokuGridView.swift`
+- `Sdoku/Views/Components/NumberPadView.swift`
+
+---
+
+**예상 소요**: 45분 | **우선순위**: Medium
+
+## Feature
+제목: 버그 수정 및 UI 변경
+설명: 버그 수정
+- 빈공간 선택 이 되지 않음(숫자 선택 후 선택하면 동작)
+
+UI 변경
+- 첨부한 이미지 형태의 비슷한 디자인으로 변경 요청
+
+## 진행 현황 (3/3)
+### 이전 완료된 SubTask
+#1 SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선 — 완료 (파일: Sdoku/Sdoku/Views/Components/SudokuCellView.swift)
+#2 SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트 — 완료 (파일: Sdoku/Sdoku/Views/Components/SudokuGridView.swift)
+
+## 현재 구현할 SubTask
+제목: NumberPadView: Sudoku.com 스타일 버튼 UI 개선
+설명: 숫자 버튼(1~9)과 지우기 버튼의 시각적 스타일을 Sudoku.com 스타일로 조정. 배경색을 Color(.systemBackground)와 얇은 테두리(overlay RoundedRectangle stroke) 조합으로 교체하거나 Color(.tertiarySystemFill) 계열로 변경. cornerRadius를 12pt, 폰트는 .system(size:26, weight:.semibold)로 조정. 버튼 높이를 56pt로 약간 키워 터치 영역 확대. 기능 로직(viewModel.inputNumber, viewModel.clearCell) 변경 없음. 독립적으로 실행 가능.
+수정 파일: Sdoku/Sdoku/Views/Components/NumberPadView.swift
+## 역할 경계
+✅ 해야 할 것:
+- 이 SubTask만 집중해서 완전히 구현
+- 실제 Swift/SwiftUI 코드 작성
+- 기존 코드 패턴과 일관성 유지
+- 이전 SubTask에서 생성/수정된 파일이 파일시스템에 이미 존재함
+- 사전 분석 결과를 참고하여 파일 탐색을 최소화하고 구현에 집중
+- 빌드 검증은 다음 단계(Verify)에서 수행되므로, 구현 자체에 집중
+
+❌ 하면 안 되는 것:
+- 다른 SubTask 범위의 파일 수정
+- 코드 설명만 하고 구현하지 않기
+- 부분적 구현 후 중단
+
+## 작업 완료 후 반드시 실행
+```
+git add -A
+git commit -m "SubTask #3: NumberPadView: Sudoku.com 스타일 버튼 UI 개선"
+```
+구현 완료 후 "[SubTask 3 완료]" 를 출력하세요.
+[/Prompt]
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/NumberPadView.swift
+
+[🔧 작성 중] /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku/Views/Components/NumberPadView.swift
+
+[🔧 명령 실행] git add Sdoku/Sdoku/Views/Components/NumberPadView.swift && git commit -m "SubTask #3: NumberPadView: Sudoku.com 스타일 버튼 UI 개선"
+변경 사항:
+- 버튼 폰트: `.system(size: 24)` → `.system(size: 26, weight: .semibold)`
+- 버튼 높이: `52` → `56`
+- 배경색: `Color(.secondarySystemBackground)` → `Color(.tertiarySystemFill)`
+- 모서리: `.cornerRadius(10)` → `.clipShape(RoundedRectangle(cornerRadius: 12))` + 얇은 stroke overlay
+
+SourceKit 진단 오류는 LSP 환경에서 `GameViewModel`을 못 찾는 것으로, 빌드 자체는 Verify 단계에서 확인됩니다.
+
+[SubTask 3 완료]
+[SubTask #3 완료] Tokens: 1.3K (in: 6, out: 1.3K, cache: 92.3K) | Cost: <$0.001 | Turns: 4
+
+[SubTask #3 완료] Tokens: 1.3K (in: 6, out: 1.3K, cache: 92.3K) | Cost: <$0.001 | Turns: 4
+
+=== 빌드 검증 (시도 1/3) ===
+
+=== 빌드 검증 ===
+빌드 실행 중...
+프로젝트: /Users/hyunjin/Developer/Git/.worktrees/develop-bece9135/Sdoku/Sdoku.xcodeproj, scheme: Sdoku
+xcodebuild 출력:
+2026-04-10 16:41:23.049 xcodebuild[70017:1481796] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+xcodebuild: error: Unable to find a destination matching the provided destination specifier:
+		{ platform:macOS }
+
+	Available destinations for the "Sdoku" scheme:
+		{ platform:iOS, arch:arm64, id:00008150-001945180AF1401C, name:@Salon }
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device }
+		{ platform:iOS Simulator, id:dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder, name:Any iOS Simulator Device }
+		{ platform:iOS Simulator, arch:x86_64, id:918FC6B7-7E0E-4ECD-BC1C-F9A8F42AA736, OS:26.2, name:iPad (A16) }
+		{ platform:iOS Simulator, arch:x86_64, id:25A63998-87FF-4780-95CC-BE07AF18BE3A, OS:26.2, name:iPad Air 11-inch (M3) }
+		{ platform:iOS Simulator, arch:x86_64, id:1BEC5CF2-590A-47FB-B21C-C90737E982D7, OS:26.2, name:iPad Air 13-inch (M3) }
+		{ platform:iOS Simulator, arch:x86_64, id:2D089899-93EE-42F5-A483-0B5BDE14AB85, OS:26.2, name:iPad Pro 11-inch (M5) }
+		{ platform:iOS Simulator, arch:x86_64, id:8C93658E-572E-4B4F-85E5-5336DB8A4133, OS:26.2, name:iPad Pro 13-inch (M5) }
+		{ platform:iOS Simulator, arch:x86_64, id:956282DA-C562-421D-A483-E53D0455A0A2, OS:26.2, name:iPad mini (A17 Pro) }
+		{ platform:iOS Simulator, arch:x86_64, id:479E382D-5F7D-438A-87FE-AD5323BF9B94, OS:26.2, name:iPhone 16e }
+		{ platform:iOS Simulator, arch:x86_64, id:21A9B6CD-1911-4B14-9808-92D0BE61A0DA, OS:26.2, name:iPhone 17 }
+		{ platform:iOS Simulator, arch:x86_64, id:2E3EA350-877A-4636-A09E-E22EDC851A85, OS:26.2, name:iPhone 17 Pro }
+		{ platform:iOS Simulator, arch:x86_64, id:75BFBA34-0F51-4AB1-B828-CC06AA6D7A71, OS:26.2, name:iPhone 17 Pro Max }
+		{ platform:iOS Simulator, arch:x86_64, id:86554B05-5264-4001-B620-6125B02B5A14, OS:26.2, name:iPhone Air }
+
+⚠️ 빌드 프로세스 에러: exit 70, 출력: F7D-438A-87FE-AD5323BF9B94, OS:26.2, name:iPhone 16e }
+		{ platform:iOS Simulator, arch:x86_64, id:21A9B6CD-1911-4B14-9808-92D0BE61A0DA, OS:26.2, name:iPhone 17 }
+		{ platform:iOS Simulator, arch:x86_64, id:2E3EA350-877A-4636-A09E-E22EDC851A85, OS:26.2, name:iPhone 17 Pro }
+		{ platform:iOS Simulator, arch:x86_64, id:75BFBA34-0F51-4AB1-B828-CC06AA6D7A71, OS:26.2, name:iPhone 17 Pro Max }
+		{ platform:iOS Simulator, arch:x86_64, id:86554B05-5264-4001-B620-6125B02B5A14, OS:26.2, name:iPhone Air }
+
+⚠️ 빌드 프로세스 에러: exit 70, 출력: F7D-438A-87FE-AD5323BF9B94, OS:26.2, name:iPhone 16e }
+		{ platform:iOS Simulator, arch:x86_64, id:21A9B6CD-1911-4B14-9808-92D0BE61A0DA, OS:26.2, name:iPhone 17 }
+		{ platform:iOS Simulator, arch:x86_64, id:2E3EA350-877A-4636-A09E-E22EDC851A85, OS:26.2, name:iPhone 17 Pro }
+		{ platform:iOS Simulator, arch:x86_64, id:75BFBA34-0F51-4AB1-B828-CC06AA6D7A71, OS:26.2, name:iPhone 17 Pro Max }
+		{ platform:iOS Simulator, arch:x86_64, id:86554B05-5264-4001-B620-6125B02B5A14, OS:26.2, name:iPhone Air }
+
+
+⚠️ Xcode 설정/환경 에러가 감지되었습니다. 코드 에러가 아니므로 성공으로 처리합니다.
+자세한 내용은 Docs에서 확인하세요.
+
+=== 테스트 실행 ===
+테스트 실행 중...
+테스트 destination: platform=iOS Simulator,id=dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder
+시뮬레이터 부팅 확인 (dvtdevic...)
+⚠️ 시뮬레이터 부팅 실패 (xcodebuild가 직접 부팅 시도): Command 'xcrun simctl bootstatus 'dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder' -b' failed (exit 148): Invalid device: dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder
+
+✅ 테스트 전체 통과 (0개)
+
+
+=== Completed: 2026-04-10T07:42:27Z | Result: success | Tokens: 1.3K (in:6 out:1.3K) | Cache: 92.3Kr/19.8Kw | 4턴 | Cost: <$0.001 ===

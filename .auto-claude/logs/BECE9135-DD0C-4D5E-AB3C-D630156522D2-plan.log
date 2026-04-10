@@ -1,0 +1,19 @@
+=== Plan | Agent: plan-strategist | Feature: 버그 수정 및 UI 변경 ===
+=== Started: 2026-04-10T07:37:01Z ===
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/.auto-claude/codebase-digest.md
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+
+[🔧 검색 중] **/*.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/NumberPadView.swift
+```json
+{"summary":"빈 셀 탭 불가 버그 수정 및 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선. SudokuCellView에 .contentShape(Rectangle()) 추가 및 isSameNumber 파라미터 도입, SudokuGridView에 동일 숫자 계산 로직 추가, NumberPadView 버튼 스타일 정돈. 총 3개 뷰 파일만 수정하며 GameViewModel·모델 레이어 무변경.","estimatedDuration":"45m","subtasks":[{"title":"SudokuCellView: 빈 셀 탭 버그 수정 + isSameNumber 파라미터 추가 + 색상 개선","description":"1) ZStack에 .contentShape(Rectangle()) 수정자를 추가하여 value=0이고 notes가 비어있는 투명 배경 빈 셀도 hit-testing 영역이 확보되도록 수정. 2) isSameNumber: Bool 파라미터를 구조체에 추가. 3) backgroundColor 계산 우선순위를 isSelected > isSameNumber > isConflict > isRelated 순으로 재정렬하고, 선택 셀 배경색을 Color.blue.opacity(0.35)에서 더 선명한 Sudoku.com 스타일(예: Color(red:0.18,green:0.45,blue:0.85).opacity(0.50))로 변경, isSameNumber 배경색은 Color.blue.opacity(0.18) 수준의 연한 파란색 적용. 4) Preview에 isSameNumber=true 케이스 추가.","files":["Sdoku/Sdoku/Views/Components/SudokuCellView.swift"],"agentType":"frontend","estimatedMinutes":15,"order":0,"dependsOn":[],"complexity":"normal"},{"title":"SudokuGridView: isSameNumber 계산 로직 추가 및 SudokuCellView 호출부 업데이트","description":"private 헬퍼 함수 isSameNumber(row:col:) -> Bool를 추가. 선택 셀이 없거나 선택 셀의 value=0이면 false 반환, 그 외 해당 셀의 value가 선택 셀 value와 동일하면 true 반환(선택 셀 자체는 isSelected로 처리하므로 false). SudokuCellView 호출부에 isSameNumber: isSameNumber(row: row, col: col) 파라미터를 전달하도록 수정. SubTask 0 완료 후 실행 필수(컴파일 의존성).","files":["Sdoku/Sdoku/Views/Components/SudokuGridView.swift"],"agentType":"frontend","estimatedMinutes":10,"order":1,"dependsOn":[0],"complexity":"simple"},{"title":"NumberPadView: Sudoku.com 스타일 버튼 UI 개선","description":"숫자 버튼(1~9)과 지우기 버튼의 시각적 스타일을 Sudoku.com 스타일로 조정. 배경색을 Color(.systemBackground)와 얇은 테두리(overlay RoundedRectangle stroke) 조합으로 교체하거나 Color(.tertiarySystemFill) 계열로 변경. cornerRadius를 12pt, 폰트는 .system(size:26, weight:.semibold)로 조정. 버튼 높이를 56pt로 약간 키워 터치 영역 확대. 기능 로직(viewModel.inputNumber, viewModel.clearCell) 변경 없음. 독립적으로 실행 가능.","files":["Sdoku/Sdoku/Views/Components/NumberPadView.swift"],"agentType":"frontend","estimatedMinutes":10,"order":2,"dependsOn":[],"complexity":"simple"}],"dependencies":[],"riskFactors":["SudokuCellView isSameNumber 파라미터 추가 전 SudokuGridView 빌드 시도 시 컴파일 에러 — SubTask 0 완료 후 SubTask 1 순서 준수 필수","backgroundColor 우선순위 재정렬 시 isConflict가 isSameNumber보다 낮은 우선순위가 되지 않도록 주의 (isSelected > isSameNumber > isConflict 유지해야 충돌 셀이 숨겨지지 않음)"],"architectureNotes":{"dataModels":["SudokuCellView 파라미터에 isSameNumber: Bool 추가 — 뷰 레이어에만 영향, SudokuCell 모델 구조체 무변경","isSameNumber는 SudokuGridView에서 선택 셀 value와 각 셀 value 비교로 파생 계산 — 별도 저장 상태(State/Published) 없음"],"protocols":["없음 — 순수 뷰 렌더링 파라미터 변경만 수행, 새 프로토콜/인터페이스 불필요"],"stateManagement":"GameViewModel.selectedRow / selectedCol / board.cells를 SudokuGridView에서 기존과 동일하게 읽어 isSameNumber 파생 계산. 새 @State, @Published, @Observable 프로퍼티 추가 없음. GameViewModel 내 로직 완전 무변경.","dataFlow":"GameViewModel.board.cells[selectedRow][selectedCol].value → SudokuGridView.isSameNumber(row:col:) 에서 각 셀 value와 비교 → SudokuCellView(isSameNumber:) 파라미터 전달 → backgroundColor 분기에서 우선순위 순으로 배경색 결정","affectedFiles":["Sdoku/Sdoku/Views/Components/SudokuCellView.swift","Sdoku/Sdoku/Views/Components/SudokuGridView.swift","Sdoku/Sdoku/Views/Components/NumberPadView.swift"]}}
+```
+
+=== Completed: 2026-04-10T07:38:47Z | Result: success | Tokens: 5.7K (in:6 out:5.7K) | Cache: 84.0Kr/21.0Kw | 7턴 | Cost: <$0.001 ===

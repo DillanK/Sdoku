@@ -1,0 +1,41 @@
+=== Spec | Agent: spec-drafter | Feature: 버그 수정 및 UI 변경 ===
+=== Started: 2026-04-10T07:35:21Z ===
+
+[🔧 에이전트 실행] Find and read the following Swift files in the Sdoku project: SudokuCellView, SudokuGridView, NumberPadView, GameViewModel. The project root is /Users/hyunjin/Developer/Git/Sdoku. Return the full content and file paths of each file.
+
+[🔧 검색 중] **/*SudokuCellView.swift
+
+[🔧 검색 중] **/*SudokuGridView.swift
+
+[🔧 검색 중] **/*NumberPadView.swift
+
+[🔧 검색 중] **/*GameViewModel.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/NumberPadView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ViewModels/GameViewModel.swift
+
+[🔧 에이전트 실행] Read the full source code of these files and return their exact content:
+1. /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+2. /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+3. /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/NumberPadView.swift
+4. /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ViewModels/GameViewModel.swift
+
+Return the complete source code verbatim for each file.
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuCellView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/SudokuGridView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/Views/Components/NumberPadView.swift
+
+[🔧 파일 읽기] /Users/hyunjin/Developer/Git/Sdoku/Sdoku/Sdoku/ViewModels/GameViewModel.swift
+```json
+{"summary":"빈 셀 탭 불가 버그 수정 및 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선하는 품질 향상 작업. SudokuCellView·SudokuGridView·NumberPadView의 순수 뷰 레이어만 변경하며, 게임 로직(GameViewModel)은 무변경.","functionalRequirements":["[필수] SudokuCellView ZStack에 .contentShape(Rectangle()) 수정자를 추가하여 value=0이고 notes가 비어있는 투명 배경 빈 셀도 탭 이벤트를 수신할 수 있도록 수정","[필수] SudokuCellView의 선택 셀 배경색을 현재 Color.blue.opacity(0.35)에서 Sudoku.com 스타일(더 선명한 파란색 계열)로 개선","[필수] SudokuCellView에 isSameNumber: Bool 파라미터를 추가하고, 선택 셀과 동일한 숫자를 가진 셀에 별도 배경색(단순 배경색)으로 하이라이트 표시","[필수] SudokuGridView에서 선택 셀의 value를 읽어 각 셀의 isSameNumber 여부를 계산한 뒤 SudokuCellView에 전달 (value=0인 빈 셀은 isSameNumber=false로 처리)","[필수] NumberPadView의 버튼 스타일을 시각적으로 정돈 (배경색, 모서리, 폰트 등 Sudoku.com 스타일에 맞게 조정)","[선택] 선택 셀 배경, 연관 셀 배경, 동일 숫자 셀 배경의 우선순위를 명확히 정의: isSelected > isConflict > isSameNumber > isRelated > 기본 순"],"nonFunctionalRequirements":["라이트모드·다크모드 양쪽에서 모든 하이라이트 색상이 가독성 있게 표시되어야 함 (Color(.systemBackground) 계열 또는 opacity 조합 사용)","GameViewModel.swift 코드 변경 없음 — 순수 뷰 레이어 변경만으로 구현","CoreData 모델 및 기존 저장 게임 데이터와의 호환성 유지 (모델 변경 없음)","SudokuCellView의 공개 인터페이스(파라미터 추가)가 SudokuGridView 호출부에 정확히 반영되어야 함"],"acceptanceCriteria":["빈 셀(value=0, notes 없음)을 탭했을 때 selectedRow·selectedCol이 해당 셀로 설정됨","이미 선택된 빈 셀을 다시 탭하면 선택이 해제됨 (기존 toggles 동작 유지)","숫자가 입력된 셀을 선택했을 때, 보드 내 동일한 숫자를 가진 다른 셀들이 별도 배경색으로 표시됨","빈 셀(value=0)을 선택했을 때 isSameNumber 하이라이트가 표시되지 않음","선택 셀은 isRelated·isSameNumber보다 높은 우선순위의 배경색으로 표시됨","충돌 셀(isConflict=true)은 선택되지 않은 상태에서 빨간 배경이 유지됨","NumberPadView가 라이트/다크 양쪽 모드에서 가독성 있는 버튼 스타일로 렌더링됨","#Preview가 빌드 오류 없이 정상 렌더링됨"],"impactScope":["Sdoku/Views/Components/SudokuCellView.swift — isSameNumber 파라미터 추가, .contentShape(Rectangle()) 수정자 추가, backgroundColor 우선순위 조정, 색상 값 변경","Sdoku/Views/Components/SudokuGridView.swift — isSameNumber 계산 로직 추가, SudokuCellView 호출부에 파라미터 전달","Sdoku/Views/Components/NumberPadView.swift — 버튼 스타일(배경색·폰트·레이아웃) 조정"],"constraints":["GameViewModel.swift 변경 금지 — 게임 로직 및 상태 관리 코드는 이 작업에서 수정하지 않음","홈 화면(HomeView) 변경 금지 — 별도 백로그로 관리","동일 숫자 하이라이트는 단순 배경색만 사용 (테두리, 아이콘 등 추가 장식 없음)","CoreData 모델·마이그레이션 변경 금지 — 이전 게임 저장 데이터 호환성 유지","기존 다크모드 동작(primary, secondary 컬러 사용 패턴) 호환성 유지"],"outOfScope":["홈 화면(HomeView) UI 리디자인","게임 완료 화면 변경","게임 기록/통계 화면 변경","셀 선택·입력 애니메이션 추가","힌트 기능 추가","타이머 UI 변경","SudokuCell·SudokuBoard 모델 변경","GameViewModel 내 로직 변경"]}
+```
+
+=== Completed: 2026-04-10T07:37:01Z | Result: success ===

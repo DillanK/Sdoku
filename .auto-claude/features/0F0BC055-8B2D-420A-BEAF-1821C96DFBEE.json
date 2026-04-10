@@ -41,8 +41,8 @@
   "id" : "0F0BC055-8B2D-420A-BEAF-1821C96DFBEE",
   "isMerged" : false,
   "issueDepth" : 0,
-  "kanbanStatus" : "done",
-  "lifecycleStage" : "qa",
+  "kanbanStatus" : "inbox",
+  "lifecycleStage" : "completed",
   "mergeHistory" : [
 
   ],

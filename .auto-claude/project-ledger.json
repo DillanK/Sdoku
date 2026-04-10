@@ -310,6 +310,90 @@
         "Sdoku\/Sdoku\/HomeView.swift"
       ],
       "verificationPassed" : true
+    },
+    {
+      "archDecisions" : [
+        "SudokuCellView isSameNumber 파라미터 추가 전 SudokuGridView 빌드 시도 시 컴파일 에러 — SubTask 0 완료 후 SubTask 1 순서 준수 필수",
+        "backgroundColor 우선순위 재정렬 시 isConflict가 isSameNumber보다 낮은 우선순위가 되지 않도록 주의 (isSelected > isSameNumber > isConflict 유지해야 충돌 셀이 숨겨지지 않음)"
+      ],
+      "childFeatureIds" : [
+
+      ],
+      "completedAt" : "2026-04-10T07:50:52Z",
+      "id" : "BECE9135-DD0C-4D5E-AB3C-D630156522D2",
+      "knownIssues" : [
+
+      ],
+      "stageOutputs" : [
+        {
+          "completedAt" : "2026-04-10T07:22:05Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "spark",
+          "summary" : "## 아이디어 요약\n\n빈 셀 탭 불가 버그를 수정하고, 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선하는 품질 향상 작업\n\n**목적**: 빈 셀 선택 불가 버그(SwiftUI hit-testing 이슈)를 해결하고, 셀 하이라이트·동일 숫자 강조·숫자 패드 스타일 개선으로 게임 플레이 사용성과 시각적 완성도를 높인다\n\n**대상 사용자**: 로컬"
+        },
+        {
+          "completedAt" : "2026-04-10T07:35:21Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "analysis",
+          "summary" : ""
+        },
+        {
+          "completedAt" : "2026-04-10T07:37:01Z",
+          "decisions" : [
+            "빈 셀(value=0, notes 없음)을 탭했을 때 selectedRow·selectedCol이 해당 셀로 설정됨",
+            "이미 선택된 빈 셀을 다시 탭하면 선택이 해제됨 (기존 toggles 동작 유지)",
+            "숫자가 입력된 셀을 선택했을 때, 보드 내 동일한 숫자를 가진 다른 셀들이 별도 배경색으로 표시됨"
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "spec",
+          "summary" : "빈 셀 탭 불가 버그 수정 및 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선하는 품질 향상 작업. SudokuCellView·SudokuGridView·NumberPadView의 순수 뷰 레이어만 변경하며, 게임 로직(GameViewModel)은 무변경."
+        },
+        {
+          "completedAt" : "2026-04-10T07:38:47Z",
+          "decisions" : [
+            "SudokuCellView isSameNumber 파라미터 추가 전 SudokuGridView 빌드 시도 시 컴파일 에러 — SubTask 0 완료 후 SubTask 1 순서 준수 필수",
+            "backgroundColor 우선순위 재정렬 시 isConflict가 isSameNumber보다 낮은 우선순위가 되지 않도록 주의 (isSelected > isSameNumber > isConflict 유지해야 충돌 셀이 숨겨지지 않음)"
+          ],
+          "keyFiles" : [
+            "Sdoku\/Sdoku\/Views\/Components\/SudokuGridView.swift",
+            "Sdoku\/Sdoku\/Views\/Components\/NumberPadView.swift",
+            "Sdoku\/Sdoku\/Views\/Components\/SudokuCellView.swift"
+          ],
+          "stage" : "plan",
+          "summary" : "빈 셀 탭 불가 버그 수정 및 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선. SudokuCellView에 .contentShape(Rectangle()) 추가 및 isSameNumber 파라미터 도입, SudokuGridView에 동일 숫자 계산 로직 추가, NumberPadView 버튼 스타일 정돈. 총 3개 뷰 파일만 수정하며 GameVi"
+        },
+        {
+          "completedAt" : "2026-04-10T07:42:27Z",
+          "decisions" : [
+
+          ],
+          "keyFiles" : [
+
+          ],
+          "stage" : "develop",
+          "summary" : "developStatus: done"
+        }
+      ],
+      "summary" : "빈 셀 탭 불가 버그 수정 및 게임 플레이 화면 UI를 Sudoku.com 스타일로 개선하는 품질 향상 작업. SudokuCellView·SudokuGridView·NumberPadView의 순수 뷰 레이어만 변경하며, 게임 로직(GameViewModel)은 무변경.",
+      "title" : "버그 수정 및 UI 변경",
+      "touchedFiles" : [
+        "Sdoku\/Sdoku\/Views\/Components\/SudokuCellView.swift",
+        "Sdoku\/Sdoku\/Views\/Components\/SudokuGridView.swift",
+        "Sdoku\/Sdoku\/Views\/Components\/NumberPadView.swift"
+      ],
+      "verificationPassed" : true
     }
   ],
   "featureGroups" : [
@@ -322,9 +406,9 @@
 
   ],
   "stats" : {
-    "lastUpdatedAt" : "2026-04-10T07:05:54Z",
-    "totalCompleted" : 4,
-    "totalCreated" : 5,
+    "lastUpdatedAt" : "2026-04-10T07:50:52Z",
+    "totalCompleted" : 5,
+    "totalCreated" : 6,
     "totalInProgress" : 0
   }
 }
